@@ -3,11 +3,26 @@ name 'ArangoDB';
 all_from 'lib/ArangoDB.pm';
 
 # requires '';
+requires 'Class::Accessor::Lite';
+requires 'Carp';
+requires 'JSON';
+requires 'Scalar::Util';
+requires 'Data::Util';
+requires 'List::MoreUtils';
+requires 'Furl';
+requires 'MIME::Base64';
 
 tests 't/*.t';
 author_tests 'xt';
 
 test_requires 'Test::More';
+test_requires 'Test::Fatal';
+test_requires 'Test::TCP';
+test_requires 'File::Temp';
+
 auto_set_repository;
 auto_include;
 WriteAll;
+
+
+sub MY::test_via_harness { "\tprove --lib --rc=t/proverc t\n" }
