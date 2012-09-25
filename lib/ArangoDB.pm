@@ -76,7 +76,7 @@ sub drop {
     }
 }
 
-sub trancete {
+sub truncate {
     my ( $self, $name ) = @_;
     my $coll = $self->collection($name);
     if ($coll) {

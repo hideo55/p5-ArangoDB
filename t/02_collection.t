@@ -86,6 +86,15 @@ subtest 'figures' => sub {
     is $stats->{alive}{size},  $coll->figure('alive-size');
 };
 
+subtest 'drop collection by name' => sub{
+    my $db = ArangoDB->new($config);
+    my $coll = $db->create('qux');
+    ok $coll;
+    $db->drop('qux');
+    $coll = $db->collection('qux');
+    ok !defined $coll;
+};
+
 subtest 'fail drop collection' => sub {
     my $db = ArangoDB->new($config);
     my $coll = $db->collection('bar');
@@ -98,9 +107,16 @@ subtest 'truncate collection' => sub {
     my $db = ArangoDB->new($config);
     my $coll = $db->create('foo');
     my $id   = $coll->id;
+    $coll->save({ foo => 1 });
+    is $coll->count, 1;
     lives_ok { $coll->truncate() };
     $coll = $db->collection('foo');
     is $coll->id, $id;
+    is $coll->count, 0;
+    $coll->save({ save => 2 });
+    is $coll->count, 1;
+    lives_ok { $db->truncate('foo') };
+    is $coll->count, 0;
 };
 
 subtest 'fail truncate collection' => sub {
