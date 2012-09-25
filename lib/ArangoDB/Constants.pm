@@ -1,7 +1,7 @@
 package ArangoDB::Constants;
 use strict;
 use warnings;
-use base qw(Exporter);
+use parent qw(Exporter);
 
 my @options = qw(OPTION_ENDPOINT OPTION_HOST OPTION_PORT OPTION_TRACE OPTION_CREATE OPTION_PILICY
     OPTION_WAIT_SYNC OPTION_AUTH_USER OPTION_AUTH_PASSWD OPTION_AUTH_TYPE OPTION_CONNECTION);
@@ -9,12 +9,15 @@ my @policies = qw(POLICY_LAST PILICY_ERROR);
 my @api = qw(API_DOCUMENT API_COLLECTION API_CURSOR API_EXAMPLE API_EDGE API_QUERY API_SIMPLE_ALL API_SIMPLE_EXAMPLE
     API_SIMPLE_FIRST API_SIMPLE_RANGE API_SIMPLE_NEAR API_SIMPLE_WITHIN);
 
-our @EXPORT_OK = ( @options, @policies, @api );
+my @status = qw(NEWBORN UNLOADED LOADED BEING_UNLOADED DELETED CORRUPTED);
+
+our @EXPORT_OK = ( @options, @policies, @api, @status );
 our %EXPORT_TAGS = (
     all    => \@EXPORT_OK,
     option => \@options,
     policy => \@policies,
     api    => \@api,
+    status => \@status,
 );
 
 # Options
@@ -43,7 +46,7 @@ use constant {
     API_DOCUMENT       => '/_api/document',
     API_COLLECTION     => '/_api/collection',
     API_CURSOR         => '/_api/cursor',
-    API_EDGE           => '/_api/edge',
+    API_EDGE           => '/_api/edges',
     API_EXAMPLE        => '/_api/simple/by-example',
     API_QUERY          => '/_api/query',
     API_INDEX          => '/_aoi/index',
@@ -54,6 +57,15 @@ use constant {
     API_SIMPLE_NEAR    => '/_api/simple/near',
     API_SIMPLE_WITHIN  => '/_api/simple/within',
 
+};
+
+use constant {
+    NEWBORN        => 1,
+    UNLOADED       => 2,
+    LOADED         => 3,
+    BEING_UNLOADED => 4,
+    DELETED        => 5,
+    CORRUPTED      => 6,
 };
 
 1;

@@ -1,24 +1,28 @@
 use Test::More;
-use Test::Fatal qw(lives_ok dies_ok);
+use Test::Fatal qw(lives_ok dies_ok exception);
+use Test::Mock::Guard;
 use ArangoDB;
 use JSON;
 
-if(!$ENV{TEST_ARANGODB_PORT}){
+if ( !$ENV{TEST_ARANGODB_PORT} ) {
     plan skip_all => 'Can"t find port of arangod';
 }
 
-my $port = $ENV{TEST_ARANGODB_PORT};
+my $port   = $ENV{TEST_ARANGODB_PORT};
+my $config = {
+    host => 'localhost',
+    port => $port,
+};
 
-my $db = ArangoDB->new(
-    {   host => 'localhost',
-        port => $port,
-    }
-);
+init();
 
-map { $_->drop } @{ $db->collections };
-
+sub init {
+    my $db = ArangoDB->new($config);
+    map { $_->drop } @{ $db->collections };
+}
 
 subtest 'create collection' => sub {
+    my $db = ArangoDB->new($config);
     my $coll;
     lives_ok { $coll = $db->create("foo"); } 'Create new collection';
     isa_ok $coll, 'ArangoDB::Collection';
@@ -27,12 +31,14 @@ subtest 'create collection' => sub {
 };
 
 subtest 'collection name confliction' => sub {
+    my $db = ArangoDB->new($config);
     dies_ok { $db->create("foo") } 'Attempt to create collection that already exist name';
     lives_ok { $db->drop('foo') } 'Drop collection';
     lives_ok { $db->create('foo'); } 'Create collection with name that dropped collection';
 };
 
 subtest 'rename collection' => sub {
+    my $db = ArangoDB->new($config);
     my $coll = $db->collection('foo');
     is $coll->name, 'foo';
     $coll->name('bar');
@@ -43,6 +49,7 @@ subtest 'rename collection' => sub {
 };
 
 subtest 'wait for sync' => sub {
+    my $db = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     is $coll->wait_for_sync, 0;
     $coll->wait_for_sync(1);
@@ -52,18 +59,56 @@ subtest 'wait for sync' => sub {
 };
 
 subtest 'unload collection' => sub {
+    my $db = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     ok $coll->is_loaded;
     $coll->unload;
     ok $coll->is_being_unloaded;
 };
 
-subtest 'documents in collection' => sub{
-  my $coll =   $db->collection('bar');
-  is $coll->count, 0;
-  my $doc = $coll->save({ baz => 1 });
-  isa_ok $doc, 'ArangoDB::Document';
-  is $coll->count, 1;
+subtest 'count documents in collection' => sub {
+    my $db = ArangoDB->new($config);
+    my $coll = $db->collection('bar');
+    is $coll->count, 0;
+    my $doc = $coll->save( { baz => 1 } );
+    isa_ok $doc, 'ArangoDB::Document';
+    is $coll->count, 1;
+    my $doc = $coll->save( { qux => 1 } );
+    is $coll->count, 2;
+};
+
+subtest 'figures' => sub {
+    my $db = ArangoDB->new($config);
+    my $coll  = $db->collection('bar');
+    my $stats = $coll->figure();
+    is ref($stats), 'HASH';
+    is $stats->{alive}{count}, $coll->figure('alive-count');
+    is $stats->{alive}{size},  $coll->figure('alive-size');
+};
+
+subtest 'fail drop collection' => sub {
+    my $db = ArangoDB->new($config);
+    my $coll = $db->collection('bar');
+    $coll->drop();
+    my $e = exception { $coll->drop() };
+    like $e, qr/^Failed to drop collection\(bar\)/;
+};
+
+subtest 'truncate collection' => sub {
+    my $db = ArangoDB->new($config);
+    my $coll = $db->create('foo');
+    my $id   = $coll->id;
+    lives_ok { $coll->truncate() };
+    $coll = $db->collection('foo');
+    is $coll->id, $id;
+};
+
+subtest 'fail truncate collection' => sub {
+    my $guard = mock_guard( 'ArangoDB::Connection' => { http_put => sub{ die ArangoDB::ServerException->new( code => 500, status => 500, detail => {} ) }, } );
+    my $db = ArangoDB->new($config);
+    my $coll = $db->collection('foo');
+    my $e = exception { $coll->truncate() };
+    like $e, qr/^Failed to truncate collection\(foo\)/;
 };
 
 done_testing;

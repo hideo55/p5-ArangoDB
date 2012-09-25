@@ -2,7 +2,7 @@ use inc::Module::Install;
 name 'ArangoDB';
 all_from 'lib/ArangoDB.pm';
 
-# requires '';
+requires 'parent';
 requires 'Class::Accessor::Lite';
 requires 'Carp';
 requires 'JSON';

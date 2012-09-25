@@ -11,8 +11,9 @@ sub new {
     $self->validate();
 
     for my $name ( keys %opts ) {
+        next if $class->can($name);
         no strict 'refs';
-        *{ 'ArangoDB::ConnectOptions::' . $name } = sub {
+        *{ $class . '::' . $name } = sub {
             $_[0]->{_options}{$name};
         };
     }

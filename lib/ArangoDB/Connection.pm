@@ -105,3 +105,15 @@ sub _parse_response {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+ArangoDB::Connection
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
+
+=cut

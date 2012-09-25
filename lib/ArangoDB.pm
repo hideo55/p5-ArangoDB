@@ -26,7 +26,7 @@ sub create {
     if ($@) {
         my $msg = "Failed to create collection($name)";
         if ( ref($@) && $@->isa('ArangoDB::ServerException') ) {
-            $msg .= ':' . $@->detail->{errorMessage};
+            $msg .= ':' . ( $@->detail->{errorMessage} || q{} );
         }
         die $msg;
     }
@@ -48,10 +48,19 @@ sub collection {
 }
 
 sub collections {
-    my $self  = shift;
-    my $conn  = $self->{connection};
-    my $res   = $conn->http_get(API_COLLECTION);
-    my @colls = map { ArangoDB::Collection->new( $conn, $_ ) } @{ $res->{collections} };
+    my $self = shift;
+    my $conn = $self->{connection};
+    my @colls;
+    eval {
+        my $res = $conn->http_get(API_COLLECTION);
+        @colls = map { ArangoDB::Collection->new( $conn, $_ ) } @{ $res->{collections} };
+    };
+    if ($@) {
+        my $e = $@;
+        if ( !ref($e) || ( $e->isa('ArangoDB::ServerException') && $e->code != 404 ) ) {
+            die 'Failed to get collections';
+        }
+    }
     return \@colls;
 }
 
@@ -73,9 +82,6 @@ sub trancete {
     if ($coll) {
         $coll->truncate;
     }
-    else {
-        die "Collection($name) not found.";
-    }
 }
 
 1;
@@ -83,15 +89,61 @@ __END__
 
 =head1 NAME
 
-ArangoDB -
+ArangoDB - ArangoDB client for Perl.
 
 =head1 SYNOPSIS
 
   use ArangoDB;
+  
+  my $db = ArangoDB->new({
+      host => 'localhost',
+      port => 8529,
+  });
+  
+  # Create new collection
+  my $coll = $db->create('collection_a');
+  
+  # Create new document
+  my $doc = $coll->save({ foo => 1 });
+  
 
 =head1 DESCRIPTION
 
-ArangoDB is
+ArangoDB is ArangoDB client for Perl.
+
+=head1 SUPPORT API VERSION
+
+This supports ArangoDB API implementation 1.0.
+
+=head1 METHODS
+
+=over 4
+
+=item * new
+
+=item * create($name)
+
+Create new collection.
+
+=item * collection($name)
+
+Get exists connection.
+
+=item * collections()
+
+Get all collections.
+
+=item * drop($name)
+
+Drop collection.
+Same as `$db->collection($name)->drop();`.
+
+=item * truncate($name)
+
+Truncate collection.
+Same as `$db->collection($name)->truncate();`.
+
+=back
 
 =head1 AUTHOR
 
