@@ -8,6 +8,8 @@ use Data::Util ();
 use Class::Accessor::Lite ( ro => [qw/id status/], );
 use ArangoDB::Constants qw(:api :status);
 use ArangoDB::Document;
+use ArangoDB::Edge;
+use ArangoDB::Index;
 
 =pod
 
@@ -686,7 +688,7 @@ sub replace_edge {
 
 =head2 remove_edge($edge_id)
 
-Remove edge in the collection.
+Remoce edge in the collection.
 
 =cut
 
@@ -696,10 +698,138 @@ sub remove_edge {
     my $api = API_EDGE . '/' . $edge_id;
     my $res = eval { $self->{connection}->http_delete($api) };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to delete the edge($edge_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to remove the edge($edge_id) in the collection(%s)" );
     }
+    return;
 }
 
+=pod
+
+=head2 create_hash_index($fileds,$unique)
+
+Create hash index on the collection.
+
+$fileds is the field of index.
+$unique is flag.If it is true, enable unique constraint.
+
+=cut
+
+sub create_hash_index {
+    my ( $self, $fields, $unique ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'hash', unique => $unique ? JSON::true : JSON::false, fileds => $fields, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 create_skiplist_index($fileds,$unique)
+
+Create skiplist index on the collection.
+
+$fileds is the field of index.
+$unique is flag.If it is true, enable unique constraint.
+
+=cut
+
+sub create_skiplist_index {
+    my ( $self, $fields, $unique ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'skiplist', unique => $unique ? JSON::true : JSON::false, fileds => $fields, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 create_geo_index($fileds,$options)
+
+Create geo index on the collection.
+
+$fileds is the field of index.
+$options is index options(HASH reference).
+
+=cut
+
+sub create_geo_index {
+    my ( $self, $fields, $options ) = @_;
+    my $api = API_INDEX . '?collection=' . $self->{id};
+    $options ||= {};
+    my $data = { type => 'geo', fileds => $fields, };
+    map { $data->{$_} = $options->{$_} ? JSON::true : JSON::false }
+        grep { exists $options->{$_} } qw(geoJson constraint ignoreNull);
+    my $res = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 get_index($index_id)
+
+Returns index object.
+
+=cut
+
+sub get_index {
+    my ($self, $index_id) = @_;
+    $index_id = defined $index_id ? $index_id : q{};
+    my $api = API_INDEX . '/' . $index_id;
+    my $res = eval{ $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);    
+}
+
+=pod
+
+=head2 remove_index($index_id)
+
+Remove index.
+
+=cut
+
+sub remove_index {
+    my ($self, $index_id) = @_;
+    $index_id = defined $index_id ? $index_id : q{};
+    my $api = API_INDEX . '/' . $index_id;
+    my $res = eval{ $self->{connection}->http_delete($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to remove the index($index_id)' );
+    }
+    return;
+}
+
+=pod
+
+=head2 get_indexes()
+
+Returns list of indexes of the collection.
+
+=cut
+
+sub get_indexes {
+    my $self = shift;
+    my $api = API_INDEX . '?collection=' . $self->{id};
+    my $res = eval{ $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+    }
+    my @indexes = map{ ArangoDB::Index->new($_) } @{ $res->{indexes} };
+    return \@indexes;
+}
+
+# Get property of the collection.
 sub _get_from_this {
     my ( $self, $path ) = @_;
     my $api = API_COLLECTION . '/' . $self->{id} . '/' . $path;
@@ -710,6 +840,7 @@ sub _get_from_this {
     return $res;
 }
 
+# Set property of the collection.
 sub _put_to_this {
     my ( $self, $path, $params ) = @_;
     my $api = API_COLLECTION . '/' . $self->{id} . '/' . $path;
@@ -726,6 +857,7 @@ sub _documents_from_respose {
     return \@docs;
 }
 
+
 sub _get_edges {
     my ( $self, $vertex, $direction ) = @_;
     my $api = API_EDGE . '/' . $self->{id} . '?vertex=' . $vertex . '&direction=' . $direction;
@@ -738,6 +870,7 @@ sub _get_edges {
     return \@edges;
 }
 
+# Handling server error
 sub _server_error_handler {
     my ( $self, $error, $message ) = @_;
     my $msg = sprintf( $message, $self->{name} );

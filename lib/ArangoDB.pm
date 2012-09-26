@@ -84,6 +84,11 @@ sub truncate {
     }
 }
 
+BEGIN {
+    *get_index    = \&ArangoDB::Collection::get_index;
+    *remove_index = \&ArangoDB::Collection::remove_index;
+}
+
 1;
 __END__
 
