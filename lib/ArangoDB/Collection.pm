@@ -195,7 +195,7 @@ The total filesize of journal files.
 
 =item journalSize
 
- The maximal size of the journal in bytes.
+The maximal size of the journal in bytes.
 
 =back
 
@@ -205,7 +205,7 @@ sub figure {
     my ( $self, $type ) = @_;
     my $res = $self->_get_from_this('figures');
     if ( defined $type ) {
-        return $res->{count} if $type eq 'count';
+        return $res->{count}       if $type eq 'count';
         return $res->{journalSize} if $type eq 'journalSize';
         my ( $area, $name ) = split( '-', $type );
         return $res->{figures}{$area}{$name} if defined $area && defined $name;
@@ -365,7 +365,7 @@ sub by_example {
     $options ||= {};
     my $data = { collection => $self->{name}, example => $example };
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit skip);
-    my $res = eval { $self->{connection}->http_put( API_SIMPLE_EXAMPLE, $data ) };
+    my $res = eval { $self->{connection}->http_post( API_SIMPLE_EXAMPLE, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(by_example) for the collection(%s)' );
     }
@@ -386,7 +386,7 @@ $example is the exmaple.
 sub first_example {
     my ( $self, $example ) = @_;
     my $data = { collection => $self->{name}, example => $example };
-    my $res = eval { $self->{connection}->http_put( API_SIMPLE_FIRST, $data ) };
+    my $res = eval { $self->{connection}->http_post( API_SIMPLE_FIRST, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
     }
@@ -431,7 +431,7 @@ sub range {
     if ( exists $data->{closed} ) {
         $data->{closed} = $data->{closed} ? JSON::true : JSON::false;
     }
-    my $res = eval { $self->{connection}->http_put( API_SIMPLE_RANGE, $data ) };
+    my $res = eval { $self->{connection}->http_post( API_SIMPLE_RANGE, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(range) for the collection(%s)' );
     }
@@ -477,7 +477,7 @@ sub near {
     $options ||= {};
     my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, };
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(distance limit skip geo);
-    my $res = eval { $self->{connection}->http_put( API_SIMPLE_NEAR, $data ) };
+    my $res = eval { $self->{connection}->http_post( API_SIMPLE_NEAR, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(near) for the collection(%s)' );
     }
@@ -523,7 +523,7 @@ sub within {
     my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, radius => $radius, };
     map { $data->{$_} = $options->{$_} }
         grep { exists $options->{$_} } qw(distance limit skip geo);
-    my $res = eval { $self->{connection}->http_put( API_SIMPLE_WITHIN, $data ) };
+    my $res = eval { $self->{connection}->http_post( API_SIMPLE_WITHIN, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(within) for the collection(%s)' );
     }
