@@ -707,7 +707,7 @@ sub remove_edge {
 
 =head2 create_hash_index($fileds,$unique)
 
-Create hash index on the collection.
+Create hash index for the collection.
 
 $fileds is the field of index.
 $unique is flag.If it is true, enable unique constraint.
@@ -720,7 +720,7 @@ sub create_hash_index {
     my $data = { type => 'hash', unique => $unique ? JSON::true : JSON::false, fileds => $fields, };
     my $res  = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create index on the collection(%s)' );
+        $self->_server_error_handler( $@, 'Failed to create hash index on the collection(%s)' );
     }
     return ArangoDB::Index->new($res);
 }
@@ -729,7 +729,7 @@ sub create_hash_index {
 
 =head2 create_skiplist_index($fileds,$unique)
 
-Create skiplist index on the collection.
+Create skiplist index for the collection.
 
 $fileds is the field of index.
 $unique is flag.If it is true, enable unique constraint.
@@ -742,7 +742,7 @@ sub create_skiplist_index {
     my $data = { type => 'skiplist', unique => $unique ? JSON::true : JSON::false, fileds => $fields, };
     my $res  = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create index on the collection(%s)' );
+        $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
     }
     return ArangoDB::Index->new($res);
 }
@@ -751,10 +751,26 @@ sub create_skiplist_index {
 
 =head2 create_geo_index($fileds,$options)
 
-Create geo index on the collection.
+Create geo index for the collection.
 
 $fileds is the field of index.
-$options is index options(HASH reference).
+$options is index options(HASH reference). The attributes of $options are:
+
+=over 4
+
+=item getJson
+
+If a geo-spatial index on a location is constructed and geoJson is true, then the order within the list is longitude followed by latitude. 
+
+=item constraint
+
+If constraint is true, then a geo-spatial constraint instead of an index is created.
+
+=item ignoreNull
+
+If a geo-spatial constraint is created and ignoreNull is true, then documents with a null in location or at least one null in latitude or longitude are ignored.
+
+=back
 
 =cut
 
@@ -767,9 +783,27 @@ sub create_geo_index {
         grep { exists $options->{$_} } qw(geoJson constraint ignoreNull);
     my $res = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create index on the collection(%s)' );
+        $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
     }
     return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 create_cap_constraint($size)
+
+Create cap constraint for the collection.
+
+=cut
+
+sub create_cap_constraint {
+    my ($self, $size) = @_;
+    my $api = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'cap', size => $size, };
+    my $res = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create cap constraint on the collection(%s)' );
+    }
 }
 
 =pod
