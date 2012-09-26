@@ -58,12 +58,14 @@ subtest 'wait for sync' => sub {
     is $coll->wait_for_sync, 0;
 };
 
-subtest 'unload collection' => sub {
+subtest 'unload and load collection' => sub {
     my $db = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     ok $coll->is_loaded;
     $coll->unload;
     ok $coll->is_being_unloaded;
+    $coll->load;
+    ok $coll->is_loaded;
 };
 
 subtest 'count documents in collection' => sub {
@@ -100,7 +102,7 @@ subtest 'fail drop collection' => sub {
     my $coll = $db->collection('bar');
     $coll->drop();
     my $e = exception { $coll->drop() };
-    like $e, qr/^Failed to drop collection\(bar\)/;
+    like $e, qr/^Failed to drop the collection\(bar\)/;
 };
 
 subtest 'truncate collection' => sub {
@@ -124,7 +126,7 @@ subtest 'fail truncate collection' => sub {
     my $db = ArangoDB->new($config);
     my $coll = $db->collection('foo');
     my $e = exception { $coll->truncate() };
-    like $e, qr/^Failed to truncate collection\(foo\)/;
+    like $e, qr/^Failed to truncate the collection\(foo\)/;
 };
 
 done_testing;

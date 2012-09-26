@@ -117,28 +117,37 @@ This supports ArangoDB API implementation 1.0.
 
 =head1 METHODS
 
+=head2 new($options)
+
+Constructor.
+$options is HASH reference.The attributes of $options are:
+
 =over 4
 
-=item * new
+=item host
 
-=item * create($name)
+=item port
+
+=back
+
+=head2 create($name)
 
 Create new collection.
 
-=item * collection($name)
+=head2 collection($name)
 
 Get exists connection.
 
-=item * collections()
+=head2 collections()
 
 Get all collections.
 
-=item * drop($name)
+=head2 drop($name)
 
 Drop collection.
 Same as `$db->collection($name)->drop();`.
 
-=item * truncate($name)
+=head2 truncate($name)
 
 Truncate collection.
 Same as `$db->collection($name)->truncate();`.
