@@ -10,6 +10,7 @@ use ArangoDB::Constants qw(:api :status);
 use ArangoDB::Document;
 use ArangoDB::Edge;
 use ArangoDB::Index;
+use ArangoDB::Cursor;
 
 =pod
 
@@ -36,11 +37,21 @@ sub new {
     my $self = bless {}, $class;
     $self->{connection} = $conn;
     weaken( $self->{connection} );
-    map { $self->{$_} = $raw_collection->{$_} } qw(id name status);
+    for my $key (qw/id name status/) {
+        $self->{$key} = $raw_collection->{$key};
+    }
     return $self;
 }
 
 =pod
+
+=head2 id()
+
+Returns identifer of the collection.
+
+=head2 status()
+
+Returns status of the collection.
 
 =head2 is_newborn()
 
@@ -116,17 +127,18 @@ sub is_corrupted {
 
 =pod
 
-=head2 name()
+=head2 name($name)
 
 Returns name of collection.
+If $name is set, rename the collection.
 
 =cut
 
 sub name {
-    my ( $self, $_name ) = @_;
-    if ($_name) {    #rename
-        $self->_put_to_this( 'rename', { name => $_name } );
-        $self->{name} = $_name;
+    my ( $self, $name ) = @_;
+    if ($name) {    #rename
+        $self->_put_to_this( 'rename', { name => $name } );
+        $self->{name} = $name;
     }
     return $self->{name};
 }
@@ -305,235 +317,6 @@ sub unload {
 
 =pod
 
-=head2 all($options)
- 
-Send 'all' simple query. 
-Returns all documents of in the collection.
-
-$options is query option(HASH reference).The attributes of $options are:
-
-=over 4
-
-=item limit
-
-The maximal amount of documents to return. (optional)
-
-=item skip
-
-The documents to skip in the query. (optional)
-
-=back 
-
-=cut
-
-sub all {
-    my ( $self, $options ) = @_;
-    $options ||= {};
-    my $data = { collection => $self->{name} };
-    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit skip);
-    my $res = eval { $self->{connection}->http_put( API_SIMPLE_ALL, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to call Simple API(all) for the collection(%s)' );
-    }
-    return $self->_documents_from_response( $res->{result} );
-}
-
-=pod
-
-=item by_example($example,$options)
-
-Send 'by_example' simple query. 
-This will find all documents matching a given example.
-
-$example is the exmaple.
-$options is query option(HASH reference).The attributes of $options are:
-
-=over 4
-
-=item limit
-
-The maximal amount of documents to return. (optional)
-
-=item skip
-
-The documents to skip in the query. (optional)
-
-=back 
-
-=cut
-
-sub by_example {
-    my ( $self, $example, $options ) = @_;
-    $options ||= {};
-    my $data = { collection => $self->{name}, example => $example };
-    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit skip);
-    my $res = eval { $self->{connection}->http_post( API_SIMPLE_EXAMPLE, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to call Simple API(by_example) for the collection(%s)' );
-    }
-    return $self->_documents_from_response( $res->{result} );
-}
-
-=pod
-
-=head2 first_example($example)
-
-Send 'first_example' simple query. 
-This will return the first document matching a given example.
-
-$example is the exmaple.
-
-=cut
-
-sub first_example {
-    my ( $self, $example ) = @_;
-    my $data = { collection => $self->{name}, example => $example };
-    my $res = eval { $self->{connection}->http_post( API_SIMPLE_FIRST, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
-    }
-    return $self->_documents_from_response( $res->{result} );
-}
-
-=pod
-
-=head2 range($attr,$lower,$upper,$options)
-
-Send 'range' simple query. 
-It looks for documents in the collection with attribute between two values.
-
-$attr is the attribute path to check.
-$lower is the lower bound.
-$upper is the upper bound.
-$options is query option(HASH reference).The attributes of $options are:
-
-=over 4
-
-=item closed
-
-If true, use intervall including left and right, otherwise exclude right, but include left
-
-=item limit
-
-The maximal amount of documents to return. (optional)
-
-=item skip
-
-The documents to skip in the query. (optional)
-
-=back 
-
-=cut
-
-sub range {
-    my ( $self, $attr, $lower, $upper, $options ) = @_;
-    $options ||= {};
-    my $data = { collection => $self->{name}, attribute => $attr, left => $lower, right => $upper, };
-    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(closed limit skip);
-    if ( exists $data->{closed} ) {
-        $data->{closed} = $data->{closed} ? JSON::true : JSON::false;
-    }
-    my $res = eval { $self->{connection}->http_post( API_SIMPLE_RANGE, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to call Simple API(range) for the collection(%s)' );
-    }
-    return $self->_documents_from_response( $res->{result} );
-}
-
-=pod
-
-=head2 near($latitude,$longitude,$options)
-
-Send 'near' simple query. 
-The default will find at most 100 documents near a given coordinate. 
-The returned list is sorted according to the distance, with the nearest document coming first.
-
-$latitude is the latitude of the coordinate.
-$longitude is longitude of the coordinate.
-$options is query option(HASH reference).The attributes of $options are:
-
-=over 4
-
-=item distance
-
-If given, the attribute key used to store the distance. (optional)
-
-=item limit
-
-The maximal amount of documents to return. (optional)
-
-=item skip
-
-The documents to skip in the query. (optional)
-
-=item geo
-
-If given, the identifier of the geo-index to use. (optional)
-
-=back 
-
-=cut
-
-sub near {
-    my ( $self, $latitude, $longitude, $options ) = @_;
-    $options ||= {};
-    my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, };
-    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(distance limit skip geo);
-    my $res = eval { $self->{connection}->http_post( API_SIMPLE_NEAR, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to call Simple API(near) for the collection(%s)' );
-    }
-    return $self->_documents_from_response( $res->{result} );
-}
-
-=pod
-
-=head2 within($latitude,$longitude,$radius,$options)
-
-Send 'within' simple query. 
-This will find all documents with in a given radius around the coordinate (latitude, longitude).
-The returned list is sorted by distance.
-
-$latitude is the latitude of the coordinate.
-$longitude is longitude of the coordinate.
-$radius is the maximal radius.
-$options is query option(HASH reference).The attributes of $options are:
-
-=over 4
-
-=item distance
-
-If given, the attribute key used to store the distance. (optional)
-
-=item limit
-
-The maximal amount of documents to return. (optional)
-
-=item skip
-
-The documents to skip in the query. (optional)
-
-=item geo
-
-If given, the identifier of the geo-index to use. (optional)
-
-=cut
-
-sub within {
-    my ( $self, $latitude, $longitude, $radius, $options ) = @_;
-    $options ||= {};
-    my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, radius => $radius, };
-    map { $data->{$_} = $options->{$_} }
-        grep { exists $options->{$_} } qw(distance limit skip geo);
-    my $res = eval { $self->{connection}->http_post( API_SIMPLE_WITHIN, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to call Simple API(within) for the collection(%s)' );
-    }
-    return $self->_documents_from_response( $res->{result} );
-}
-
-=pod
-
 =head2 document($doc_id)
 
 Get documnet in the collection.
@@ -593,19 +376,19 @@ sub replace {
 
 =pod
 
-=head2 remove($doc_id)
+=head2 delete($doc_id)
 
-Remove document in the collection.
+Delete document in the collection.
 
 =cut
 
-sub remove {
+sub delete {
     my ( $self, $doc_id ) = @_;
     $doc_id = defined $doc_id ? $doc_id : q{};
     my $api = API_DOCUMENT . '/' . $doc_id;
     my $res = eval { $self->{connection}->http_delete($api) };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to remove the document($doc_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to delete the document($doc_id) in the collection(%s)" );
     }
     return;
 }
@@ -686,19 +469,19 @@ sub replace_edge {
 
 =pod
 
-=head2 remove_edge($edge_id)
+=head2 delete_edge($edge_id)
 
 Remoce edge in the collection.
 
 =cut
 
-sub remove_edge {
+sub delete_edge {
     my ( $self, $edge_id ) = @_;
     $edge_id = defined $edge_id ? $edge_id : q{};
     my $api = API_EDGE . '/' . $edge_id;
     my $res = eval { $self->{connection}->http_delete($api) };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to remove the edge($edge_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to delete the edge($edge_id) in the collection(%s)" );
     }
     return;
 }
@@ -717,7 +500,7 @@ $unique is flag.If it is true, enable unique constraint.
 sub create_hash_index {
     my ( $self, $fields, $unique ) = @_;
     my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $data = { type => 'hash', unique => $unique ? JSON::true : JSON::false, fileds => $fields, };
+    my $data = { type => 'hash', unique => $unique ? JSON::true : JSON::false, fields => $fields, };
     my $res  = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create hash index on the collection(%s)' );
@@ -739,7 +522,7 @@ $unique is flag.If it is true, enable unique constraint.
 sub create_skiplist_index {
     my ( $self, $fields, $unique ) = @_;
     my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $data = { type => 'skiplist', unique => $unique ? JSON::true : JSON::false, fileds => $fields, };
+    my $data = { type => 'skiplist', unique => $unique ? JSON::true : JSON::false, fields => $fields, };
     my $res  = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
@@ -778,7 +561,7 @@ sub create_geo_index {
     my ( $self, $fields, $options ) = @_;
     my $api = API_INDEX . '?collection=' . $self->{id};
     $options ||= {};
-    my $data = { type => 'geo', fileds => $fields, };
+    my $data = { type => 'geo', fields => $fields, };
     map { $data->{$_} = $options->{$_} ? JSON::true : JSON::false }
         grep { exists $options->{$_} } qw(geoJson constraint ignoreNull);
     my $res = eval { $self->{connection}->http_post( $api, $data ) };
@@ -797,10 +580,10 @@ Create cap constraint for the collection.
 =cut
 
 sub create_cap_constraint {
-    my ($self, $size) = @_;
-    my $api = API_INDEX . '?collection=' . $self->{id};
+    my ( $self, $size ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
     my $data = { type => 'cap', size => $size, };
-    my $res = eval { $self->{connection}->http_post( $api, $data ) };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create cap constraint on the collection(%s)' );
     }
@@ -815,31 +598,31 @@ Returns index object.
 =cut
 
 sub get_index {
-    my ($self, $index_id) = @_;
+    my ( $self, $index_id ) = @_;
     $index_id = defined $index_id ? $index_id : q{};
     my $api = API_INDEX . '/' . $index_id;
-    my $res = eval{ $self->{connection}->http_get($api) };
+    my $res = eval { $self->{connection}->http_get($api) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);    
+    return ArangoDB::Index->new($res);
 }
 
 =pod
 
-=head2 remove_index($index_id)
+=head2 drop_index($index_id)
 
-Remove index.
+Drop the index.
 
 =cut
 
-sub remove_index {
-    my ($self, $index_id) = @_;
+sub drop_index {
+    my ( $self, $index_id ) = @_;
     $index_id = defined $index_id ? $index_id : q{};
     my $api = API_INDEX . '/' . $index_id;
-    my $res = eval{ $self->{connection}->http_delete($api) };
+    my $res = eval { $self->{connection}->http_delete($api) };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to remove the index($index_id)' );
+        $self->_server_error_handler( $@, 'Failed to drop the index($index_id)' );
     }
     return;
 }
@@ -854,13 +637,244 @@ Returns list of indexes of the collection.
 
 sub get_indexes {
     my $self = shift;
-    my $api = API_INDEX . '?collection=' . $self->{id};
-    my $res = eval{ $self->{connection}->http_get($api) };
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $res  = eval { $self->{connection}->http_get($api) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    my @indexes = map{ ArangoDB::Index->new($_) } @{ $res->{indexes} };
+    my @indexes = map { ArangoDB::Index->new($_) } @{ $res->{indexes} };
     return \@indexes;
+}
+
+=pod
+
+=head2 all($options)
+ 
+Send 'all' simple query. 
+Returns all documents of in the collection.
+
+$options is query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item limit
+
+The maximal amount of documents to return. (optional)
+
+=item skip
+
+The documents to skip in the query. (optional)
+
+=back 
+
+=cut
+
+sub all {
+    my ( $self, $options ) = @_;
+    $options ||= {};
+    my $data = { collection => $self->{name} };
+    for my $key ( grep { exists $options->{$_} } qw{limit skip} ) {
+        $data->{$key} = $options->{$key};
+    }
+    my $res = eval { $self->{connection}->http_put( API_SIMPLE_ALL, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to call Simple API(all) for the collection(%s)' );
+    }
+    return $self->_documents_from_response( $res->{result} );
+}
+
+=pod
+
+=item by_example($example,$options)
+
+Send 'by_example' simple query. 
+This will find all documents matching a given example.
+
+$example is the exmaple.
+$options is query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item limit
+
+The maximal amount of documents to return. (optional)
+
+=item skip
+
+The documents to skip in the query. (optional)
+
+=back 
+
+=cut
+
+sub by_example {
+    my ( $self, $example, $options ) = @_;
+    $options ||= {};
+    my $data = { collection => $self->{name}, example => $example };
+    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit skip);
+    my $res = eval { $self->{connection}->http_put( API_SIMPLE_EXAMPLE, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to call Simple API(by_example) for the collection(%s)' );
+    }
+    return $self->_documents_from_response( $res->{result} );
+}
+
+=pod
+
+=head2 first_example($example)
+
+Send 'first_example' simple query. 
+This will return the first document matching a given example.
+
+$example is the exmaple.
+
+=cut
+
+sub first_example {
+    my ( $self, $example ) = @_;
+    my $data = { collection => $self->{name}, example => $example };
+    my $res = eval { $self->{connection}->http_put( API_SIMPLE_FIRST, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
+    }
+    return $self->_documents_from_response( $res->{result} );
+}
+
+=pod
+
+=head2 range($attr,$lower,$upper,$options)
+
+Send 'range' simple query. 
+It looks for documents in the collection with attribute between two values.
+
+$attr is the attribute path to check.
+$lower is the lower bound.
+$upper is the upper bound.
+$options is query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item closed
+
+If true, use intervall including left and right, otherwise exclude right, but include left
+
+=item limit
+
+The maximal amount of documents to return. (optional)
+
+=item skip
+
+The documents to skip in the query. (optional)
+
+=back 
+
+=cut
+
+sub range {
+    my ( $self, $attr, $lower, $upper, $options ) = @_;
+    $options ||= {};
+    my $data = { collection => $self->{name}, attribute => $attr, left => $lower, right => $upper, };
+    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(closed limit skip);
+    if ( exists $data->{closed} ) {
+        $data->{closed} = $data->{closed} ? JSON::true : JSON::false;
+    }
+    my $res = eval { $self->{connection}->http_put( API_SIMPLE_RANGE, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to call Simple API(range) for the collection(%s)' );
+    }
+    return $self->_documents_from_response( $res->{result} );
+}
+
+=pod
+
+=head2 near($latitude,$longitude,$options)
+
+Send 'near' simple query. 
+The default will find at most 100 documents near a given coordinate. 
+The returned list is sorted according to the distance, with the nearest document coming first.
+
+$latitude is the latitude of the coordinate.
+$longitude is longitude of the coordinate.
+$options is query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item distance
+
+If given, the attribute key used to store the distance. (optional)
+
+=item limit
+
+The maximal amount of documents to return. (optional)
+
+=item skip
+
+The documents to skip in the query. (optional)
+
+=item geo
+
+If given, the identifier of the geo-index to use. (optional)
+
+=back 
+
+=cut
+
+sub near {
+    my ( $self, $latitude, $longitude, $options ) = @_;
+    $options ||= {};
+    my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, };
+    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(distance limit skip geo);
+    my $res = eval { $self->{connection}->http_put( API_SIMPLE_NEAR, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to call Simple API(near) for the collection(%s)' );
+    }
+    return $self->_documents_from_response( $res->{result} );
+}
+
+=pod
+
+=head2 within($latitude,$longitude,$radius,$options)
+
+Send 'within' simple query. 
+This will find all documents with in a given radius around the coordinate (latitude, longitude).
+The returned list is sorted by distance.
+
+$latitude is the latitude of the coordinate.
+$longitude is longitude of the coordinate.
+$radius is the maximal radius.
+$options is query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item distance
+
+If given, the attribute key used to store the distance. (optional)
+
+=item limit
+
+The maximal amount of documents to return. (optional)
+
+=item skip
+
+The documents to skip in the query. (optional)
+
+=item geo
+
+If given, the identifier of the geo-index to use. (optional)
+
+=cut
+
+sub within {
+    my ( $self, $latitude, $longitude, $radius, $options ) = @_;
+    $options ||= {};
+    my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, radius => $radius, };
+    map { $data->{$_} = $options->{$_} }
+        grep { exists $options->{$_} } qw(distance limit skip geo);
+    my $res = eval { $self->{connection}->http_put( API_SIMPLE_WITHIN, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to call Simple API(within) for the collection(%s)' );
+    }
+    return $self->_documents_from_response( $res->{result} );
 }
 
 # Get property of the collection.
@@ -885,12 +899,11 @@ sub _put_to_this {
     return $res;
 }
 
-sub _documents_from_respose {
+sub _documents_from_response {
     my ( $self, $res ) = @_;
     my @docs = map { ArangoDB::Document->new($_) } @$res;
     return \@docs;
 }
-
 
 sub _get_edges {
     my ( $self, $vertex, $direction ) = @_;

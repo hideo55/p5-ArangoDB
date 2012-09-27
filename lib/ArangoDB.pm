@@ -1,8 +1,10 @@
 package ArangoDB;
 use strict;
 use warnings;
+use Carp qw(croak);
 use ArangoDB::Connection;
 use ArangoDB::Collection;
+use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
 
 our $VERSION = '0.01';
@@ -24,27 +26,24 @@ sub create {
         $coll = ArangoDB::Collection->new( $self->{connection}, $res );
     };
     if ($@) {
-        my $msg = "Failed to create collection($name)";
-        if ( ref($@) && $@->isa('ArangoDB::ServerException') ) {
-            $msg .= ':' . ( $@->detail->{errorMessage} || q{} );
-        }
-        die $msg;
+        $self->_server_error_handler( $@, "Failed to create collection($name)" );
     }
     return $coll;
 }
 
-sub collection {
+sub find {
     my ( $self, $name ) = @_;
     my $api = API_COLLECTION . '/' . $name;
-    my $res = undef;
-    eval { $res = $self->{connection}->http_get($api); };
+    my $res = eval { $self->{connection}->http_get($api); };
     if ($@) {
-        my $e = $@;
-        if ( !ref($e) || ( $e->isa('ArangoDB::ServerException') && $e->code != 404 ) ) {
-            die "Failed to get collection: $name";
-        }
+        $self->_server_error_handler( $@, "Failed to get collection: $name", 1 );
     }
     return $res ? ArangoDB::Collection->new( $self->{connection}, $res ) : undef;
+}
+
+sub collection {
+    my ( $self, $name ) = @_;
+    return $self->find($name) || $self->create($name);
 }
 
 sub collections {
@@ -56,10 +55,7 @@ sub collections {
         @colls = map { ArangoDB::Collection->new( $conn, $_ ) } @{ $res->{collections} };
     };
     if ($@) {
-        my $e = $@;
-        if ( !ref($e) || ( $e->isa('ArangoDB::ServerException') && $e->code != 404 ) ) {
-            die 'Failed to get collections';
-        }
+        $self->_server_error_handler( $@, 'Failed to get collections' );
     }
     return \@colls;
 }
@@ -69,10 +65,7 @@ sub drop {
     my $api = API_COLLECTION . '/' . $name;
     eval { $self->{connection}->http_delete($api); };
     if ($@) {
-        my $e = $@;
-        if ( !ref($e) || ( $e->isa('ArangoDB::ServerException') && $e->code != 404 ) ) {
-            die "Failed to drop collection: $name";
-        }
+        $self->_server_error_handler( $@, "Failed to drop collection($name)", 1 );
     }
 }
 
@@ -84,9 +77,32 @@ sub truncate {
     }
 }
 
+sub query {
+    my ( $self, $query, $options ) = @_;
+    return ArangoDB::Statement->new( $self->{connection}, $query, $options );
+}
+
+sub validate_query {
+    my ( $self, $query ) = @_;
+    my $res = eval { $self->{connection}->http_post( API_QUERY, { query => $query } ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to parse query' );
+    }
+    return $res->{bindVars};
+}
+
+sub _server_error_handler {
+    my ( $self, $error, $message, $ignore_404 ) = @_;
+    if ( ref($error) && $error->isa('ArangoDB::ServerException') ) {
+        return if $ignore_404 && $error->code == 404;
+        $message .= ':' . ( $error->detail->{errorMessage} || q{} );
+    }
+    croak $message;
+}
+
 BEGIN {
-    *get_index    = \&ArangoDB::Collection::get_index;
-    *remove_index = \&ArangoDB::Collection::remove_index;
+    *get_index  = \&ArangoDB::Collection::get_index;
+    *drop_index = \&ArangoDB::Collection::drop_index;
 }
 
 1;
@@ -105,11 +121,12 @@ ArangoDB - ArangoDB client for Perl.
       port => 8529,
   });
   
-  # Create new collection
-  my $coll = $db->create('collection_a');
-  
-  # Create new document
-  my $doc = $coll->save({ foo => 1 });
+  $db->collection('my_collection')->save({ x => 42, y => { a => 1, b => 2, } }); # Create document
+  $db->collection('my_collection')->save({ x => 1, y => { a => 1, b => 10, } });
+  $db->collection('my_collection')->name('new_name'); # rename the collection
+  $db->collection('my_collection')->create_hash_index([qw/x y/]);
+  my $documents = $db->collection('new_name')->by_example({ b => 2 });
+  $db->drop(); # Drop the collection
   
 
 =head1 DESCRIPTION
@@ -139,9 +156,15 @@ $options is HASH reference.The attributes of $options are:
 
 Create new collection.
 
+=head2 find($name)
+
+Get a Collection based on $name.
+Returns C<undef> if it doesn't exist. 
+
 =head2 collection($name)
 
-Get exists connection.
+Get or create a Collection based on $name.
+If the Collection $name not exists, Create it.
 
 =head2 collections()
 
@@ -157,13 +180,29 @@ Same as `$db->collection($name)->drop();`.
 Truncate collection.
 Same as `$db->collection($name)->truncate();`.
 
-=back
+=head2 get_index($index_id)
+
+Returns index object.
+
+=head2 drop_index($index_id)
+
+Drop the index.
+
+=head2 query($query)
+
+Returns instance of ArangoDB::Statement.
+
+=head2 validate_query($query)
+
+Validate a query string without executing.
 
 =head1 AUTHOR
 
 Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =head1 SEE ALSO
+
+ArangoDB websie L<http://www.arangodb.org/>
 
 =head1 LICENSE
 

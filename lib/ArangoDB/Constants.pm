@@ -3,8 +3,8 @@ use strict;
 use warnings;
 use parent qw(Exporter);
 
-my @options = qw(OPTION_ENDPOINT OPTION_HOST OPTION_PORT OPTION_TRACE OPTION_CREATE OPTION_PILICY
-    OPTION_WAIT_SYNC OPTION_AUTH_USER OPTION_AUTH_PASSWD OPTION_AUTH_TYPE OPTION_CONNECTION);
+my @options = qw(OPTION_ENDPOINT OPTION_HOST OPTION_PORT OPTION_PILICY OPTION_WAIT_SYNC OPTION_AUTH_USER
+    OPTION_AUTH_PASSWD OPTION_AUTH_TYPE OPTION_CONNECTION);
 my @policies = qw(POLICY_LAST PILICY_ERROR);
 my @api = qw(API_DOCUMENT API_COLLECTION API_CURSOR API_EXAMPLE API_EDGE API_QUERY API_SIMPLE_ALL API_SIMPLE_EXAMPLE
     API_SIMPLE_FIRST API_SIMPLE_RANGE API_SIMPLE_NEAR API_SIMPLE_WITHIN API_INDEX);
@@ -25,8 +25,6 @@ use constant {
     OPTION_HOST        => 'host',
     OPTION_PORT        => 'port',
     OPTION_TIMEOUT     => 'timeout',
-    OPTION_TRACE       => 'trace',
-    OPTION_CREATE      => 'create',
     OPTION_PILICY      => 'policy',
     OPTION_WAIT_SYNC   => 'wait_for_sysnc',
     OPTION_AUTH_USER   => 'auth_user',
@@ -46,10 +44,10 @@ use constant {
     API_DOCUMENT       => '/_api/document',
     API_COLLECTION     => '/_api/collection',
     API_CURSOR         => '/_api/cursor',
-    API_EDGE           => '/_api/edges',
+    API_EDGE           => '/_api/edge',
     API_EXAMPLE        => '/_api/simple/by-example',
     API_QUERY          => '/_api/query',
-    API_INDEX          => '/_aoi/index',
+    API_INDEX          => '/_api/index',
     API_SIMPLE_ALL     => '/_api/simple/all',
     API_SIMPLE_EXAMPLE => '/_api/simple/by-example',
     API_SIMPLE_FIRST   => '/_api/simple/first-example',

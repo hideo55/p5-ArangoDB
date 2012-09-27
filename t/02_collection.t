@@ -21,6 +21,18 @@ sub init {
     map { $_->drop } @{ $db->collections };
 }
 
+subtest 'SYNOPSYS' => sub {
+    my $db   = ArangoDB->new($config);
+    $db->collection('my_collection')->save( { x => 42, y => { a => 1, b => 2, } } );    # Create document
+    $db->collection('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
+    $db->collection('my_collection')->name('new_name');                                 # rename the collection
+    $db->collection('my_collection')->create_hash_index( [qw/y/] );
+    my $docs = $db->collection('new_name')->by_example( { x => 42 } );
+    is scalar @$docs, 1;
+    is_deeply $docs->[0]->content, { x => 42, y => { a => 1, b => 2, } };
+    $db->collection('new_name')->drop();                                                                        # Drop the collection
+};
+
 subtest 'create collection' => sub {
     my $db = ArangoDB->new($config);
     my $coll;
@@ -38,7 +50,7 @@ subtest 'collection name confliction' => sub {
 };
 
 subtest 'rename collection' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->collection('foo');
     is $coll->name, 'foo';
     $coll->name('bar');
@@ -49,7 +61,7 @@ subtest 'rename collection' => sub {
 };
 
 subtest 'wait for sync' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     is $coll->wait_for_sync, 0;
     $coll->wait_for_sync(1);
@@ -59,7 +71,7 @@ subtest 'wait for sync' => sub {
 };
 
 subtest 'unload and load collection' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     ok $coll->is_loaded;
     $coll->unload;
@@ -69,7 +81,7 @@ subtest 'unload and load collection' => sub {
 };
 
 subtest 'count documents in collection' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     is $coll->count, 0;
     my $doc = $coll->save( { baz => 1 } );
@@ -80,7 +92,7 @@ subtest 'count documents in collection' => sub {
 };
 
 subtest 'figures' => sub {
-    my $db = ArangoDB->new($config);
+    my $db    = ArangoDB->new($config);
     my $coll  = $db->collection('bar');
     my $stats = $coll->figure();
     is ref($stats), 'HASH';
@@ -88,17 +100,17 @@ subtest 'figures' => sub {
     is $stats->{alive}{size},  $coll->figure('alive-size');
 };
 
-subtest 'drop collection by name' => sub{
-    my $db = ArangoDB->new($config);
+subtest 'drop collection by name' => sub {
+    my $db   = ArangoDB->new($config);
     my $coll = $db->create('qux');
     ok $coll;
     $db->drop('qux');
-    $coll = $db->collection('qux');
+    $coll = $db->find('qux');
     ok !defined $coll;
 };
 
 subtest 'fail drop collection' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->collection('bar');
     $coll->drop();
     my $e = exception { $coll->drop() };
@@ -106,27 +118,29 @@ subtest 'fail drop collection' => sub {
 };
 
 subtest 'truncate collection' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->create('foo');
     my $id   = $coll->id;
-    $coll->save({ foo => 1 });
+    $coll->save( { foo => 1 } );
     is $coll->count, 1;
     lives_ok { $coll->truncate() };
     $coll = $db->collection('foo');
-    is $coll->id, $id;
+    is $coll->id,    $id;
     is $coll->count, 0;
-    $coll->save({ save => 2 });
+    $coll->save( { save => 2 } );
     is $coll->count, 1;
     lives_ok { $db->truncate('foo') };
     is $coll->count, 0;
 };
 
 subtest 'fail truncate collection' => sub {
-    my $guard = mock_guard( 'ArangoDB::Connection' => { http_put => sub{ die ArangoDB::ServerException->new( code => 500, status => 500, detail => {} ) }, } );
-    my $db = ArangoDB->new($config);
+    my $guard = mock_guard( 'ArangoDB::Connection' =>
+            { http_put => sub { die ArangoDB::ServerException->new( code => 500, status => 500, detail => {} ) }, } );
+    my $db   = ArangoDB->new($config);
     my $coll = $db->collection('foo');
-    my $e = exception { $coll->truncate() };
+    my $e    = exception { $coll->truncate() };
     like $e, qr/^Failed to truncate the collection\(foo\)/;
 };
+
 
 done_testing;

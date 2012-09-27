@@ -4,7 +4,6 @@ use warnings;
 use Furl;
 use MIME::Base64;
 use JSON;
-
 use ArangoDB::ConnectOptions;
 use ArangoDB::ServerException;
 
@@ -112,8 +111,58 @@ __END__
 
 ArangoDB::Connection
 
+=head1 DESCRIPTION
+
+The ArangoDB::Connection class creates a connection to the ArangoDB server.
+
+=head1 METHODS
+
+=head2 new($options)
+
+Constructor.
+$options if connection option. The attributes of $options are:
+
+=over 4
+
+=item host
+
+=item port
+
+=item timeout
+
+=item policy
+
+=item wait_for_sync
+
+=item auth_user
+
+=item auth_passwd
+
+=item auth_type
+
+=item connection
+
+=item use_proxy
+
+=back
+
+=head2 http_get($path)
+
+=head2 http_post($path,$data)
+
+=haed2 http_put($path,$data)
+
+=head2 http_delete($path)
+
 =head1 AUTHOR
 
 Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
+
+=head1 SEE ALSO
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
 
 =cut
