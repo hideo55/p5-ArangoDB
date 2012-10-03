@@ -366,7 +366,7 @@ Replace document in the collection.
 sub replace {
     my ( $self, $doc_id, $data ) = @_;
     $doc_id = defined $doc_id ? $doc_id : q{};
-    my $api = API_DOCUMENT . '/' . $doc_id . '?policy=last';
+    my $api = API_DOCUMENT . '/' . $doc_id;
     eval { $self->{connection}->http_put( $api, $data ); };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to replace the document($doc_id) in the collection(%s)" );

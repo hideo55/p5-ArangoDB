@@ -20,7 +20,6 @@ test_requires 'Test::Fatal';
 test_requires 'Test::TCP';
 test_requires 'File::Temp';
 test_requires 'Test::Mock::Guard';
-test_requires 'Test;;Deep';
 
 auto_set_repository;
 auto_include;

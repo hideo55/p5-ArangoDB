@@ -2,7 +2,6 @@ package ArangoDB::Document;
 use strict;
 use warnings;
 use overload
-    '0+'  => sub { shift->id },
     q{""} => sub { shift->id },
     fallback => 1;
 
