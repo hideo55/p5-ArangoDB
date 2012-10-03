@@ -11,21 +11,18 @@ use ArangoDB::BindVars;
 use ArangoDB::Constants qw(:api);
 
 sub new {
-    my ( $class, $conn, $query, $options ) = @_;
+    my ( $class, $conn, $query) = @_;
     my $self = bless {
         connection => $conn,
         query      => $query,
     }, $class;
-    for my $key ( grep { exists $options->{$_} } qw{batch_size do_count} ) {
-        $self->{$key} = $options->{$key};
-    }
     $self->{bind_vars} = ArangoDB::BindVars->new();
     return $self;
 }
 
 sub execute {
-    my $self = shift;
-    my $data = $self->_build_data;
+    my ($self, $options) = @_;
+    my $data = $self->_build_data($options);
     my $res  = eval { $self->{connection}->http_post( API_CURSOR, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to execute query' );
@@ -50,18 +47,18 @@ sub bind {
 }
 
 sub _build_data {
-    my $self = shift;
+    my ($self, $options) = @_;
     my $data = {
         query => $self->{query},
-        count => $self->{do_count},
+        count => $options->{do_count},
     };
 
     if ( $self->{bind_vars}->count > 0 ) {
         $data->{bindVars} = $self->{bind_vars}->get_all();
     }
 
-    if ( exists $self->{batch_size} && $self->{batch_size} > 0 ) {
-        $data->{batchSize} = $self->{batch_size};
+    if ( exists $options->{batch_size} && $options->{batch_size} > 0 ) {
+        $data->{batchSize} = $options->{batch_size};
     }
 
     return $data;
@@ -101,9 +98,12 @@ ArangoDB::Statement
     }
   
     # Use bind variable
-    $sth = $db->query('FOR u IN users FILTER u.name == @name');
-    $sth->bind( name => 'John Doe' );
-        
+    $sth = $db->query('FOR u IN users FILTER u.age >= @age');
+    $sth->bind( age => 18 );
+    $cur = $sth->execute();
+    while( my $doc = $cur->next() ){
+        # do something
+    }    
 
 
 =head1 DESCRIPTION
@@ -112,12 +112,17 @@ A AQL(Arango Query Language) statement handler.
 
 =head1 METHODS
 
-=head2 new($conn,$query,$options)
+=head2 new($conn,$query)
 
 Constructor.
 
 $conn is instance of ArangoDB::Connection.
 $query is AQL statement.
+
+=head2 execute($options)
+
+Execute AQL query and returns cursor(instance of ArangoDB::Cursor).
+
 $options is query options.The attributes of $options are:
 
 =over 4
@@ -131,10 +136,6 @@ Maximum number of result documents to be transferred from the server to the clie
 Boolean flag that indicates whether the number of documents found should be returned as "count" attribute in the result set (optional).
 
 =back
-
-=head2 execute()
-
-Execute AQL query and returns cursor(instance of ArangoDB::Cursor).
 
 =head2 bind_vars()
 
