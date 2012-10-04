@@ -27,9 +27,13 @@ subtest 'SYNOPSYS' => sub {
     $db->collection('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
     $db->collection('my_collection')->name('new_name');                                 # rename the collection
     $db->collection('my_collection')->create_hash_index( [qw/y/] );
-    my $docs = $db->collection('new_name')->by_example( { x => 42 } );
-    is scalar @$docs, 1;
-    is_deeply $docs->[0]->content, { x => 42, y => { a => 1, b => 2, } };
+    my $cur = $db->collection('new_name')->by_example( { x => 42 } );
+    my @docs;
+    while( my $doc = $cur->next() ){
+        push @docs, $doc;
+    }
+    is scalar @docs, 1;
+    is_deeply $docs[0]->content, { x => 42, y => { a => 1, b => 2, } };
     $db->collection('new_name')->drop();                                                                        # Drop the collection
 };
 

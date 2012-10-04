@@ -49,15 +49,10 @@ subtest 'Repace document' => sub {
     my $coll = $db->collection('foo');
     my $doc1 = $coll->save( { foo => 'bar' } );
     is_deeply $doc1->content, { foo => 'bar' };
-    $coll->replace( $doc1, { foo => 'baz' } );
-    sleep(1);
-    my $doc2 = $coll->document($doc1);
-    diag $doc1->revision;
-    diag $doc2->revision;
+    my $doc2 = $coll->replace( $doc1, { foo => 'baz' } );
     is $doc1, $doc2;
-    is_deeply $doc1->content, $doc2->content;
+    ok $doc1->revision < $doc2->revision;
+    is_deeply $doc2->content, { foo => 'baz' };
 };
-
-#TODO document api test
 
 done_testing;

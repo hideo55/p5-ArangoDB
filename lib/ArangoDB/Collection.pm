@@ -12,7 +12,7 @@ use ArangoDB::Edge;
 use ArangoDB::Index;
 use ArangoDB::Cursor;
 use overload
-    q{""} => sub { shift->id },
+    q{""}    => sub { shift->id },
     fallback => 1;
 
 =pod
@@ -689,7 +689,7 @@ sub all {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(all) for the collection(%s)' );
     }
-    return $self->_documents_from_response( $res->{result} );
+    return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
 =pod
@@ -725,7 +725,7 @@ sub by_example {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(by_example) for the collection(%s)' );
     }
-    return $self->_documents_from_response( $res->{result} );
+    return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
 =pod
@@ -746,7 +746,7 @@ sub first_example {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
     }
-    return $self->_documents_from_response( $res->{result} );
+    return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
 =pod
@@ -791,7 +791,7 @@ sub range {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(range) for the collection(%s)' );
     }
-    return $self->_documents_from_response( $res->{result} );
+    return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
 =pod
@@ -837,7 +837,7 @@ sub near {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(near) for the collection(%s)' );
     }
-    return $self->_documents_from_response( $res->{result} );
+    return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
 =pod
@@ -883,7 +883,7 @@ sub within {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(within) for the collection(%s)' );
     }
-    return $self->_documents_from_response( $res->{result} );
+    return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
 # Get property of the collection.
