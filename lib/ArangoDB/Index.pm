@@ -1,16 +1,7 @@
 package ArangoDB::Index;
 use strict;
 use warnings;
-use Class::Accessor::Lite ( ro => [qw/id fields type/] );
-
-sub new {
-    my ( $class, $index_info ) = @_;
-    my $self = bless {}, $class;
-    for my $key (qw/id type fields/) {
-        $self->{$key} = $index_info->{$key};
-    }
-    return $self;
-}
+use Class::Accessor::Lite ( new => 1, ro => [qw/id fields type/] );
 
 1;
 __END__
@@ -28,6 +19,8 @@ Instance of ArangoDB index.
 =head1 METHODS
 
 =head2 new()
+
+Constructor.
 
 =head2 id()
 

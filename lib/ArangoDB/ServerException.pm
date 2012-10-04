@@ -30,7 +30,7 @@ Returns HTTP response code.
 
 Returns HTTP status.
 
-=head2 detail
+=head2 detail()
 
 Returns detail information of server error.
 

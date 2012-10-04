@@ -18,3 +18,52 @@ sub new {
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+ArangoDB::ClientException
+
+=head1 DESCRIPTION
+
+Exception class that thrown by client when the client use invalid bind variables.
+
+=head1 METHODS
+
+=head2 new()
+
+Constructor.
+
+=head2 message()
+
+Returns error message.
+
+=head2 package()
+
+Returns package name of the error occured.
+
+=head2 file()
+
+Returns file name of the error occured.
+
+=head2 line()
+
+Returns line number of the error occured.
+
+=head2 subroutine()
+
+Returns subroutine name of the error occured.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
+
+=head1 SEE ALSO
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
