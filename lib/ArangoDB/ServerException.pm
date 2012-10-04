@@ -5,3 +5,44 @@ use Class::Accessor::Lite ( new => 1, ro => [qw/code status detail/] );
 
 1;
 __END__
+
+=pod
+
+=head1 NAME
+
+ArangoDB::ServerException
+
+=head1 DESCRIPTION
+
+Exception class that thrown by client when the server returns an error response.
+
+=head1 METHODS
+
+=head2 new()
+
+Constructor.
+
+=head2 code()
+
+Returns HTTP response code.
+
+=head2 status()
+
+Returns HTTP status.
+
+=head2 detail
+
+Returns detail information of server error.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
+
+=head1 SEE ALSO
+
+=head1 LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
+
+=cut
