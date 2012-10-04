@@ -11,6 +11,9 @@ use ArangoDB::Document;
 use ArangoDB::Edge;
 use ArangoDB::Index;
 use ArangoDB::Cursor;
+use overload
+    q{""} => sub { shift->id },
+    fallback => 1;
 
 =pod
 
@@ -395,11 +398,17 @@ sub delete {
 
 =pod
 
-=head2 any_edges()
+=head2 any_edges($vertex)
 
-=head2 in_edges()
+Returns the list of edges starting or ending in the vertex identified by $vertex.
 
-=head2 out_edges()
+=head2 in_edges($vertex)
+
+Returns the list of edges ending in the vertex identified by $vertex.
+
+=head2 out_edges($vertex)
+
+Returns the list of edges starting in the vertex identified by $vertex.
 
 =cut
 
