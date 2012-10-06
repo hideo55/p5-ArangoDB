@@ -26,7 +26,7 @@ subtest 'SYNOPSYS' => sub {
     $db->collection('my_collection')->save( { x => 42, y => { a => 1, b => 2, } } );    # Create document
     $db->collection('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
     $db->collection('my_collection')->name('new_name');                                 # rename the collection
-    $db->collection('my_collection')->create_hash_index( [qw/y/] );
+    $db->collection('my_collection')->ensure_hash_index( [qw/y/] );
     my $cur = $db->collection('new_name')->by_example( { x => 42 } );
     my @docs;
     while( my $doc = $cur->next() ){

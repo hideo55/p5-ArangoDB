@@ -7,7 +7,8 @@ use ArangoDB::Collection;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
 
-our $VERSION = '0.01';
+our $VERSION = '0.01_01';
+$VERSION = eval $VERSION;
 
 sub new {
     my ( $class, $options ) = @_;

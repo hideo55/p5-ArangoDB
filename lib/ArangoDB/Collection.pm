@@ -497,166 +497,6 @@ sub delete_edge {
 
 =pod
 
-=head2 create_hash_index($fileds,$unique)
-
-Create hash index for the collection.
-
-$fileds is the field of index.
-$unique is flag.If it is true, enable unique constraint.
-
-=cut
-
-sub create_hash_index {
-    my ( $self, $fields, $unique ) = @_;
-    my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $data = { type => 'hash', unique => $unique ? JSON::true : JSON::false, fields => $fields, };
-    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create hash index on the collection(%s)' );
-    }
-    return ArangoDB::Index->new($res);
-}
-
-=pod
-
-=head2 create_skiplist_index($fileds,$unique)
-
-Create skiplist index for the collection.
-
-$fileds is the field of index.
-$unique is flag.If it is true, enable unique constraint.
-
-=cut
-
-sub create_skiplist_index {
-    my ( $self, $fields, $unique ) = @_;
-    my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $data = { type => 'skiplist', unique => $unique ? JSON::true : JSON::false, fields => $fields, };
-    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
-    }
-    return ArangoDB::Index->new($res);
-}
-
-=pod
-
-=head2 create_geo_index($fileds,$options)
-
-Create geo index for the collection.
-
-$fileds is the field of index.
-$options is index options(HASH reference). The attributes of $options are:
-
-=over 4
-
-=item getJson
-
-If a geo-spatial index on a location is constructed and geoJson is true, then the order within the list is longitude followed by latitude. 
-
-=item constraint
-
-If constraint is true, then a geo-spatial constraint instead of an index is created.
-
-=item ignoreNull
-
-If a geo-spatial constraint is created and ignoreNull is true, then documents with a null in location or at least one null in latitude or longitude are ignored.
-
-=back
-
-=cut
-
-sub create_geo_index {
-    my ( $self, $fields, $options ) = @_;
-    my $api = API_INDEX . '?collection=' . $self->{id};
-    $options ||= {};
-    my $data = { type => 'geo', fields => $fields, };
-    map { $data->{$_} = $options->{$_} ? JSON::true : JSON::false }
-        grep { exists $options->{$_} } qw(geoJson constraint ignoreNull);
-    my $res = eval { $self->{connection}->http_post( $api, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
-    }
-    return ArangoDB::Index->new($res);
-}
-
-=pod
-
-=head2 create_cap_constraint($size)
-
-Create cap constraint for the collection.
-
-=cut
-
-sub create_cap_constraint {
-    my ( $self, $size ) = @_;
-    my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $data = { type => 'cap', size => $size, };
-    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create cap constraint on the collection(%s)' );
-    }
-}
-
-=pod
-
-=head2 get_index($index_id)
-
-Returns index object.
-
-=cut
-
-sub get_index {
-    my ( $self, $index_id ) = @_;
-    $index_id = defined $index_id ? $index_id : q{};
-    my $api = API_INDEX . '/' . $index_id;
-    my $res = eval { $self->{connection}->http_get($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
-    }
-    return ArangoDB::Index->new($res);
-}
-
-=pod
-
-=head2 drop_index($index_id)
-
-Drop the index.
-
-=cut
-
-sub drop_index {
-    my ( $self, $index_id ) = @_;
-    $index_id = defined $index_id ? $index_id : q{};
-    my $api = API_INDEX . '/' . $index_id;
-    my $res = eval { $self->{connection}->http_delete($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to drop the index($index_id)' );
-    }
-    return;
-}
-
-=pod
-
-=head2 get_indexes()
-
-Returns list of indexes of the collection.
-
-=cut
-
-sub get_indexes {
-    my $self = shift;
-    my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $res  = eval { $self->{connection}->http_get($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
-    }
-    my @indexes = map { ArangoDB::Index->new($_) } @{ $res->{indexes} };
-    return \@indexes;
-}
-
-=pod
-
 =head2 all($options)
  
 Send 'all' simple query. 
@@ -884,6 +724,222 @@ sub within {
         $self->_server_error_handler( $@, 'Failed to call Simple API(within) for the collection(%s)' );
     }
     return ArangoDB::Cursor->new( $self->{connection}, $res );
+}
+
+=pod
+
+=head2 ensure_hash_index($fileds)
+
+Create hash index for the collection.
+
+$fileds is the field of index.
+
+=cut
+
+sub ensure_hash_index {
+    my ( $self, $fields, $unique ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'hash', unique => JSON::false, fields => $fields, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create hash index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 ensure_unique_constraint($fileds)
+
+Create unique hash index for the collection.
+
+$fileds is the field of index.
+
+=cut
+
+sub ensure_unique_constraint {
+    my ( $self, $fields ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'hash', unique => JSON::true, fields => $fields, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create unique hash index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 ensure_skiplist($fileds)
+
+Create skiplist index for the collection.
+
+$fileds is the field of index.
+
+=cut
+
+sub ensure_skiplist {
+    my ( $self, $fields ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'skiplist', unique => JSON::false, fields => $fields, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 ensure_unique_skiplist($fileds)
+
+Create unique skiplist index for the collection.
+
+$fileds is the field of index.
+
+=cut
+
+sub ensure_unique_skiplist {
+    my ( $self, $fields, $unique ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'skiplist', unique => JSON::true, fields => $fields, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create unique skiplist index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 ensure_geo_index($fileds,$is_geojson)
+
+Create geo index for the collection.
+
+$fileds is the field of index.
+$is_geojson is boolean flag. If it is true, then the order within the list is longitude followed by latitude. 
+
+=cut
+
+sub ensure_geo_index {
+    my ( $self, $fields, $is_geojson ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = {
+        type       => 'geo',
+        fields     => $fields,
+        constraint => JSON::false,
+        geoJson    => $is_geojson ? JSON::true : JSON::false,
+    };
+    my $res = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 ensure_geo_constraint($fileds,$ignore_null)
+
+It works like ensure_geo_index() but requires that the documents contain a valid geo definition.
+
+$fileds is the field of index.
+$ignore_null is boolean flag. If it is true, then documents with a null in location or at least one null in latitude or longitude are ignored.
+
+=back
+
+=cut
+
+sub ensure_geo_constraint {
+    my ( $self, $fields, $ignore_null ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = {
+        type       => 'geo',
+        fields     => $fields,
+        constraint => JSON::true,
+        ignoreNull => $ignore_null ? JSON::true : JSON::false,
+    };
+    my $res = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 create_cap_constraint($size)
+
+Create cap constraint for the collection.
+
+=cut
+
+sub create_cap_constraint {
+    my ( $self, $size ) = @_;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $data = { type => 'cap', size => $size, };
+    my $res  = eval { $self->{connection}->http_post( $api, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to create cap constraint on the collection(%s)' );
+    }
+    return ArangoDB::CapConstraint->new($res);
+}
+
+=pod
+
+=head2 get_index($index_id)
+
+Returns index object.
+
+=cut
+
+sub get_index {
+    my ( $self, $index_id ) = @_;
+    $index_id = defined $index_id ? $index_id : q{};
+    my $api = API_INDEX . '/' . $index_id;
+    my $res = eval { $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+    }
+    return ArangoDB::Index->new($res);
+}
+
+=pod
+
+=head2 drop_index($index_id)
+
+Drop the index.
+
+=cut
+
+sub drop_index {
+    my ( $self, $index_id ) = @_;
+    $index_id = defined $index_id ? $index_id : q{};
+    my $api = API_INDEX . '/' . $index_id;
+    my $res = eval { $self->{connection}->http_delete($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to drop the index($index_id)' );
+    }
+    return;
+}
+
+=pod
+
+=head2 get_indexes()
+
+Returns list of indexes of the collection.
+
+=cut
+
+sub get_indexes {
+    my $self = shift;
+    my $api  = API_INDEX . '?collection=' . $self->{id};
+    my $res  = eval { $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+    }
+    my @indexes = map { ArangoDB::Index->new($_) } @{ $res->{indexes} };
+    return \@indexes;
 }
 
 # Get property of the collection.
