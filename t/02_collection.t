@@ -22,19 +22,19 @@ sub init {
 }
 
 subtest 'SYNOPSYS' => sub {
-    my $db   = ArangoDB->new($config);
+    my $db = ArangoDB->new($config);
     $db->collection('my_collection')->save( { x => 42, y => { a => 1, b => 2, } } );    # Create document
     $db->collection('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
     $db->collection('my_collection')->name('new_name');                                 # rename the collection
     $db->collection('my_collection')->ensure_hash_index( [qw/y/] );
     my $cur = $db->collection('new_name')->by_example( { x => 42 } );
     my @docs;
-    while( my $doc = $cur->next() ){
+    while ( my $doc = $cur->next() ) {
         push @docs, $doc;
     }
     is scalar @docs, 1;
     is_deeply $docs[0]->content, { x => 42, y => { a => 1, b => 2, } };
-    $db->collection('new_name')->drop();                                                                        # Drop the collection
+    $db->collection('new_name')->drop();                                                # Drop the collection
 };
 
 subtest 'create collection' => sub {
@@ -146,5 +146,21 @@ subtest 'fail truncate collection' => sub {
     like $e, qr/^Failed to truncate the collection\(foo\)/;
 };
 
+subtest 'bulk import - header' => sub {
+    my $db = ArangoDB->new($config);
+    my $res = $db->collection('di1')->bulk_import( [qw/fistsName lastName age gender/],
+        [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
+    ok !$res->{failed};
+    is $res->{created}, 2;
+};
+
+subtest 'bulk import - self-contained' => sub {
+    my $db  = ArangoDB->new($config);
+    my $res = $db->collection('di2')->bulk_import_self_contained(
+        [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ]
+    );
+    ok !$res->{failed};
+    is $res->{created}, 2;
+};
 
 done_testing;

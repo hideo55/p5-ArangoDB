@@ -4,13 +4,13 @@ use warnings;
 use JSON;
 use Carp qw(croak);
 use Scalar::Util qw(weaken);
-use Data::Util ();
 use Class::Accessor::Lite ( ro => [qw/id status/], );
 use ArangoDB::Constants qw(:api :status);
 use ArangoDB::Document;
 use ArangoDB::Edge;
 use ArangoDB::Index;
 use ArangoDB::Cursor;
+use ArangoDB::ClientException;
 use overload
     q{""}    => sub { shift->id },
     fallback => 1;
@@ -360,6 +360,63 @@ sub save {
 
 =pod
 
+=head2 bulk_import($header,$body)
+
+Import multiple documents at once.
+
+$header is ARRAY reference of attribute names.
+$body is ARRAY reference of document values.
+
+Example
+
+    $collection->bulk_import(
+        [qw/fistsName lastName age gender/],
+        [
+            [ "Joe", "Public", 42, "male" ],
+            [ "Jane", "Doe", 31, "female" ],
+        ]
+    );    
+
+=cut
+
+sub bulk_import {
+    my ( $self, $header, $body ) = @_;
+    croak ArangoDB::ClientException->new('2nd parameter must be ARRAY reference.')
+        unless $body && ref($body) eq 'ARRAY';
+    my $api  = API_IMPORT . '?collection=' . $self->{id};
+    my $data = join "\n", map { encode_json($_) } ( $header, @$body );
+    my $res  = eval { $self->{connection}->http_post_raw( $api, $data ); };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
+    }
+    return $res;
+}
+
+=pod
+
+=head2 bulk_import_self_contained($documents)
+
+Import multiple self-contained documents at once.
+
+$documents is the ARRAY reference of documents.
+
+=cut
+
+sub bulk_import_self_contained {
+    my ( $self, $documents ) = @_;
+    croak ArangoDB::ClientException->new('Parameter must be ARRAY reference.')
+        unless $documents && ref($documents) eq 'ARRAY';
+    my $api  = API_IMPORT . '?type=documents&collection=' . $self->{id};
+    my $data = join "\n", map { encode_json($_) } @$documents;
+    my $res  = eval { $self->{connection}->http_post_raw( $api, $data ); };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
+    }
+    return $res;
+}
+
+=pod
+
 =head2 replace($doc_id,$data)
 
 Replace document in the collection.
@@ -402,9 +459,28 @@ sub delete {
 
 Returns the list of edges starting or ending in the vertex identified by $vertex.
 
+
+=cut
+
+sub any_edges {
+    my ( $self, $vertex ) = @_;
+    return $self->_get_edges( $vertex, 'any' );
+}
+
+=pod
+
 =head2 in_edges($vertex)
 
 Returns the list of edges ending in the vertex identified by $vertex.
+
+=cut
+
+sub in_edges {
+    my ( $self, $vertex ) = @_;
+    return $self->_get_edges( $vertex, 'in' );
+}
+
+=pod
 
 =head2 out_edges($vertex)
 
@@ -412,12 +488,9 @@ Returns the list of edges starting in the vertex identified by $vertex.
 
 =cut
 
-for my $direction (qw/any in out/) {
-    my $sub = sub {
-        my ( $self, $vertex ) = @_;
-        return $self->_get_edges( $vertex, $direction );
-    };
-    Data::Util::install_subroutine( __PACKAGE__, "${direction}_edges " => $sub );
+sub out_edges {
+    my ( $self, $vertex ) = @_;
+    return $self->_get_edges( $vertex, 'out' );
 }
 
 =pod
