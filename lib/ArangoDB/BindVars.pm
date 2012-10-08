@@ -1,7 +1,6 @@
 package ArangoDB::BindVars;
 use strict;
 use warnings;
-use Data::Util qw(:check);
 
 sub new {
     my $class = shift;
@@ -19,11 +18,11 @@ sub get {
 
 sub set {
     my ( $self, $name, $val ) = @_;
-    if ( is_hash_ref($name) ) {
+    if ( ArangoDB::BindVars::Validator::is_hash_ref($name) ) {
         ArangoDB::BindVars::Validator::validate($name);
         $self->{_values} = $name;
     }
-    elsif ( is_integer($name) || is_string($name) ) {
+    elsif ( ArangoDB::BindVars::Validator::is_integer($name) || ArangoDB::BindVars::Validator::is_string($name) ) {
         ArangoDB::BindVars::Validator::validate($val);
         $self->{_values}{$name} = $val;
     }
@@ -35,15 +34,35 @@ sub count {
 
 {
 
-    package                                #Hiding package
+    package#Hiding package
         ArangoDB::BindVars::Validator;
     use strict;
     use warnings;
-    use Data::Util qw(:check);
+    use Scalar::Util qw(looks_like_number);
     use ArangoDB::ClientException;
 
     sub is_bool {
         !defined( $_[0] ) || $_[0] eq "" || "$_[0]" eq '1' || "$_[0]" eq '0';
+    }
+
+    sub is_string {
+        defined( $_[0] ) && ref( \$_[0] ) eq 'SCALAR';
+    }
+
+    sub is_number {
+        !ref( $_[0] ) && looks_like_number( $_[0] );
+    }
+
+    sub is_integer {
+        defined( $_[0] ) && !ref( $_[0] ) && $_[0] =~ /^-?[0-9]+$/;
+    }
+
+    sub is_array_ref {
+        defined( $_[0] ) && ref( $_[0] ) eq 'ARRAY';
+    }
+
+    sub is_hash_ref {
+        defined( $_[0] ) && ref( $_[0] ) eq 'HASH';
     }
 
     sub validate {

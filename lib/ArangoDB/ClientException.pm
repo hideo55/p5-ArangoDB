@@ -2,6 +2,9 @@ package ArangoDB::ClientException;
 use strict;
 use warnings;
 use Class::Accessor::Lite ( ro => [qw/message package file line subrutine/] );
+use overload
+    q{""} => sub { $_[0]->message },
+    fallback => 1;
 
 sub new {
     my ( $class, $message ) = @_;

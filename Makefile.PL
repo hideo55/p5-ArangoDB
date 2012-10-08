@@ -7,7 +7,6 @@ requires 'Class::Accessor::Lite';
 requires 'Carp';
 requires 'JSON';
 requires 'Scalar::Util';
-requires 'Data::Util';
 requires 'List::MoreUtils';
 requires 'Furl';
 requires 'MIME::Base64';

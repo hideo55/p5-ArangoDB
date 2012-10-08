@@ -29,6 +29,7 @@ sub init {
 subtest 'Normal statement' => sub {
     my $db  = ArangoDB->new($config);
     my $sth = $db->query('FOR u IN users SORT u.name ASC RETURN u');
+    is "$sth", 'FOR u IN users SORT u.name ASC RETURN u';
     my $cur = $sth->execute();
     my @docs;
     while ( my $doc = $cur->next() ) {
@@ -47,7 +48,7 @@ subtest 'Use bind var1' => sub {
     my $db  = ArangoDB->new($config);
     my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
     $sth->bind( age => 10 );
-    my $cur = $sth->execute();
+    my $cur = $sth->();
     my @docs;
     while ( my $doc = $cur->next() ) {
         push @docs, $doc->content;
@@ -62,6 +63,38 @@ subtest 'Use bind var1' => sub {
     }
     my $expects2 = [ { name => 'John Doe', age => 42 }, ];
     is_deeply( \@docs2, $expects2 );
+    
+    
+    my $e = exception{
+        $sth->bind( age => {} );
+    };
+    like $e, qr/^Invalid bind parameter value/;
+    
+};
+
+subtest 'batch query' => sub {
+    my $db  = ArangoDB->new($config);
+    my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
+    $sth->bind( age => 10 );
+    my $cur = $sth->execute( { batch_size => 2, } );
+    my @docs;
+    while ( my $doc = $cur->next() ) {
+        push @docs, $doc->content;
+    }
+    is scalar @docs, 3;
+};
+
+subtest 'delete cursor' => sub {
+    my $db  = ArangoDB->new($config);
+    my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
+    $sth->bind( age => 10 );
+    my $cur = $sth->execute( { batch_size => 2, } );
+    $cur->delete;
+    my $e = exception {
+        while ( my $doc = $cur->next() ) {
+        }
+    };
+    like $e, qr/^Failed to get next batch cursor/;
 };
 
 done_testing;

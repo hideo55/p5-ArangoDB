@@ -2,8 +2,8 @@ package ArangoDB::Connection;
 use strict;
 use warnings;
 use Furl;
-use MIME::Base64;
 use JSON;
+use MIME::Base64;
 use ArangoDB::ConnectOptions;
 use ArangoDB::ServerException;
 
@@ -38,6 +38,14 @@ sub http_get {
 sub http_post {
     my ( $self, $path, $data ) = @_;
     $data = defined $data ? encode_json($data) : q{};
+    my $url     = $self->{api_str} . $path;
+    my $headers = $self->_build_headers($data);
+    my $res     = $self->{_http_agent}->post( $url, $headers, $data );
+    return $self->_parse_response($res);
+}
+
+sub http_post_raw {
+    my ( $self, $path, $data ) = @_;
     my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
     my $res     = $self->{_http_agent}->post( $url, $headers, $data );
@@ -126,23 +134,37 @@ $options if connection option. The attributes of $options are:
 
 =item host
 
+Host name
+
 =item port
+
+Port number
 
 =item timeout
 
-=item policy
-
-=item wait_for_sync
+Connection timeout
 
 =item auth_user
 
+User name for authentication
+
 =item auth_passwd
+
+Password for authentication
 
 =item auth_type
 
+Authentication method.
+Supporting "Basic" only.
+
 =item connection
 
+HTTP Connection header('Close' or 'Keep-Alive').
+Default value is 'Close'.
+
 =item use_proxy
+
+If it is true,use $ENV{http_poxy} as HTTP Proxy server.
 
 =back
 

@@ -2,8 +2,11 @@ package ArangoDB::Statement;
 use strict;
 use warnings;
 use overload
-    '&{}'    => sub { shift->execute() },
-    q{""}    => sub { shift->{query} },
+    q{""} => sub { $_[0]->{query} },
+    '&{}' => sub {
+    my ($self, $options) = @_;
+    return sub { $self->execute($options) }
+    },
     fallback => 1;
 use Carp qw(croak);
 use ArangoDB::Cursor;
@@ -11,7 +14,7 @@ use ArangoDB::BindVars;
 use ArangoDB::Constants qw(:api);
 
 sub new {
-    my ( $class, $conn, $query) = @_;
+    my ( $class, $conn, $query ) = @_;
     my $self = bless {
         connection => $conn,
         query      => $query,
@@ -21,9 +24,9 @@ sub new {
 }
 
 sub execute {
-    my ($self, $options) = @_;
+    my ( $self, $options ) = @_;
     my $data = $self->_build_data($options);
-    my $res  = eval { $self->{connection}->http_post( API_CURSOR, $data ) };
+    my $res = eval { $self->{connection}->http_post( API_CURSOR, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to execute query' );
     }
@@ -47,7 +50,7 @@ sub bind {
 }
 
 sub _build_data {
-    my ($self, $options) = @_;
+    my ( $self, $options ) = @_;
     my $data = {
         query => $self->{query},
         count => $options->{do_count},

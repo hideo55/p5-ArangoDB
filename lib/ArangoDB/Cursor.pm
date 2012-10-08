@@ -1,6 +1,7 @@
 package ArangoDB::Cursor;
 use strict;
 use warnings;
+use Carp qw(croak);
 use ArangoDB::Document;
 use ArangoDB::Constants qw(:api);
 use Class::Accessor::Lite ( ro => [qw/id length/], );
@@ -33,13 +34,14 @@ sub _get_next_batch {
         my $res = $self->{connection}->http_put( API_CURSOR . '/' . $self->id, {} );
         $self->{id}       = $res->{id};
         $self->{has_more} = $res->{hasMore};
-        $self->{length}   = $res->{count};
+        $self->{length}   = scalar( @{ $res->{result} } );
         $self->{result}   = $res->{result};
         $self->{position} = 0;
     };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get next batch cursor(%d)' );
     }
+    return 1;
 }
 
 sub delete {

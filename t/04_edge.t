@@ -26,6 +26,8 @@ subtest 'create edge' => sub{
     my $doc1 = $coll->save({ foo => 'bar', baz => 10 });
     my $doc2 = $coll->save({ foo => 'qux', baz => 11 });
     my $edge1 = $coll->save_edge($doc1,$doc2,{ foo => 1 });
+    is $edge1->from, $doc1->id;
+    is $edge1->to, $doc2->id;
     my $edge2 = $coll->edge($edge1);
     is_deeply($edge1,$edge2);
 };
