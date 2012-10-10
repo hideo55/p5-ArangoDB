@@ -9,6 +9,7 @@ use ArangoDB::Constants qw(:api :status);
 use ArangoDB::Document;
 use ArangoDB::Edge;
 use ArangoDB::Index;
+use ArangoDB::CapConstraint;
 use ArangoDB::Cursor;
 use ArangoDB::ClientException;
 use overload
@@ -99,7 +100,7 @@ Return true if status of the collection is 'being unloaded'.
 =cut
 
 sub is_being_unloaded {
-    return $_[0]->{status} == BEING_UNLOADED;
+    $_[0]->{status} == BEING_UNLOADED;
 }
 
 =pod
@@ -111,8 +112,7 @@ Return true if status of the collection is 'deleted'.
 =cut
 
 sub is_deleted {
-    my $self = shift;
-    return $_[0]->{status} == DELETED;
+    $_[0]->{status} == DELETED;
 }
 
 =pod
@@ -124,7 +124,6 @@ Return true if status of the collection is invalid.
 =cut
 
 sub is_corrupted {
-    my $self = shift;
     return $_[0]->{status} >= CORRUPTED;
 }
 
@@ -659,7 +658,7 @@ sub first_example {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Document->new( $res->{document} );
 }
 
 =pod
@@ -668,6 +667,8 @@ sub first_example {
 
 Send 'range' simple query. 
 It looks for documents in the collection with attribute between two values.
+
+Note: You must declare a skip-list index on the attribute in order to be able to use a range query.
 
 $attr is the attribute path to check.
 $lower is the lower bound.
@@ -678,7 +679,7 @@ $options is query option(HASH reference).The attributes of $options are:
 
 =item closed
 
-If true, use intervall including left and right, otherwise exclude right, but include left
+If true, use intervall including $lower and $upper, otherwise exclude $upper, but include $lower
 
 =item limit
 
@@ -941,13 +942,13 @@ sub ensure_geo_constraint {
 
 =pod
 
-=head2 create_cap_constraint($size)
+=head2 ensure_cap_constraint($size)
 
 Create cap constraint for the collection.
 
 =cut
 
-sub create_cap_constraint {
+sub ensure_cap_constraint {
     my ( $self, $size ) = @_;
     my $api  = API_INDEX . '?collection=' . $self->{id};
     my $data = { type => 'cap', size => $size, };
@@ -1037,12 +1038,6 @@ sub _put_to_this {
     return $res;
 }
 
-sub _documents_from_response {
-    my ( $self, $res ) = @_;
-    my @docs = map { ArangoDB::Document->new($_) } @$res;
-    return \@docs;
-}
-
 sub _get_edges {
     my ( $self, $vertex, $direction ) = @_;
     my $api = API_EDGE . '/' . $self->{id} . '?vertex=' . $vertex . '&direction=' . $direction;
@@ -1067,18 +1062,3 @@ sub _server_error_handler {
 
 1;
 __END__
-
-=pod
-
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=head1 SEE ALSO
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
-
-=cut

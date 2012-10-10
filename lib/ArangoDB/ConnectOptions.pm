@@ -23,8 +23,6 @@ sub new {
 
 my @supported_auth_type = qw(Basic);
 
-my @supported_connection_type = qw(Close Keep-Alive);
-
 my $validator = {
     is_str => sub {
         defined( $_[0] ) && ref( \$_[0] ) eq 'SCALAR';
@@ -46,11 +44,11 @@ sub _validate {
             && !$validator->{is_int}->( $options->{port} );
 
     if ( $options->{auth_type} && none { $options->{auth_type} eq $_ } @supported_auth_type ) {
-        die "unsupported authorization method";
+        die sprintf( "unsupported auth_type value '%s'", $options->{auth_type} );
     }
 
-    if ( $options->{connection} && none { $options->{connection} eq $_ } @supported_connection_type ) {
-        die sprintf( "unsupported connection value '%s'", $options->{connection} );
+    if ( $options->{keep_alive} ) {
+        $options->{keep_alive} = 1;
     }
 
 }
@@ -63,7 +61,7 @@ sub _get_defaults {
         auth_user   => undef,
         auth_passwd => undef,
         auth_type   => undef,
-        connection  => 'Close',
+        keep_alive  => 0,
         use_proxy   => 0,
     };
 }
@@ -92,19 +90,36 @@ $options is a connect option(Hash reference. The attributes of $options are:
 
 =item host
 
+Hostname or IP address of ArangoDB server.
+
 =item port
+
+Port number of ArangoDB server.
 
 =item timeout
 
+Seconds of HTTP connection timeout.
+
 =item auth_user
+
+User name for authentication
 
 =item auth_passwd
 
+Password for authentication
+
 =item auth_type
 
-=item connection
+Authentication method.
+Supporting "Basic" only.
+
+=item keep_alive
+
+If it is true, use HTTP Keep-Alive connection.
 
 =item use_proxy
+
+If it is true,use $ENV{http_poxy} as HTTP Proxy server.
 
 =back
 

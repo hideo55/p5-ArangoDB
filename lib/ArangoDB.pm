@@ -83,15 +83,6 @@ sub query {
     return ArangoDB::Statement->new( $self->{connection}, $query, $options );
 }
 
-sub validate_query {
-    my ( $self, $query ) = @_;
-    my $res = eval { $self->{connection}->http_post( API_QUERY, { query => $query } ) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to parse query' );
-    }
-    return $res->{bindVars};
-}
-
 sub _server_error_handler {
     my ( $self, $error, $message, $ignore_404 ) = @_;
     if ( ref($error) && $error->isa('ArangoDB::ServerException') ) {
@@ -118,15 +109,23 @@ ArangoDB - ArangoDB client for Perl.
   use ArangoDB;
   
   my $db = ArangoDB->new({
-      host => 'localhost',
-      port => 8529,
+      host       => 'localhost',
+      port       => 8529,
+      keep_alive => 1,
   });
   
-  $db->collection('my_collection')->save({ x => 42, y => { a => 1, b => 2, } }); # Create document
+  # Create new document
+  $db->collection('my_collection')->save({ x => 42, y => { a => 1, b => 2, } });
   $db->collection('my_collection')->save({ x => 1, y => { a => 1, b => 10, } });
   $db->collection('my_collection')->name('new_name'); # rename the collection
+  
+  # Create hash index.
   $db->collection('my_collection')->create_hash_index([qw/x y/]);
-  my $documents = $db->collection('new_name')->by_example({ b => 2 });
+  
+  # Simple query
+  my $cursor = $db->collection('new_name')->by_example({ b => 2 });
+  
+  # Drop collection
   $db->drop(); # Drop the collection
   
 
@@ -149,27 +148,59 @@ $options is HASH reference.The attributes of $options are:
 
 =item host
 
+Hostname or IP address of ArangoDB server.
+
 =item port
+
+Port number of ArangoDB server.
+
+=item timeout
+
+Seconds of HTTP connection timeout.
+
+=item auth_user
+
+User name for authentication
+
+=item auth_passwd
+
+Password for authentication
+
+=item auth_type
+
+Authentication method.
+Supporting "Basic" only.
+
+=item keep_alive
+
+If it is true, use HTTP Keep-Alive connection.
+
+=item use_proxy
+
+If it is true,use $ENV{http_poxy} as HTTP Proxy server.
 
 =back
 
 =head2 create($name)
 
 Create new collection.
+Returns instance of L<ArangoDB::Collection>.
 
 =head2 find($name)
 
 Get a Collection based on $name.
-Returns C<undef> if it doesn't exist. 
+Returns instance of L<ArangoDB::Collection>.
+If the collection does not exist, returns C<undef>. 
 
 =head2 collection($name)
 
 Get or create a Collection based on $name.
-If the Collection $name not exists, Create it.
+If the Collection $name does not exist, Create it.
 
 =head2 collections()
 
 Get all collections.
+Returns ARRAY reference.
 
 =head2 drop($name)
 
@@ -178,24 +209,20 @@ Same as `$db->collection($name)->drop();`.
 
 =head2 truncate($name)
 
-Truncate collection.
+Truncate a collection.
 Same as `$db->collection($name)->truncate();`.
 
 =head2 get_index($index_id)
 
-Returns index object.
+Returns instance of L<ArangoDB::Index>.
 
 =head2 drop_index($index_id)
 
-Drop the index.
+Drop a index.
 
 =head2 query($query)
 
-Returns instance of ArangoDB::Statement.
-
-=head2 validate_query($query)
-
-Validate a query string without executing.
+Returns instance of L<ArangoDB::Statement>.
 
 =head1 AUTHOR
 

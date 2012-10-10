@@ -4,7 +4,7 @@ use warnings;
 use overload
     q{""} => sub { $_[0]->{query} },
     '&{}' => sub {
-    my ($self, $options) = @_;
+    my ( $self, $options ) = @_;
     return sub { $self->execute($options) }
     },
     fallback => 1;
@@ -33,8 +33,24 @@ sub execute {
     return ArangoDB::Cursor->new( $self->{connection}, $res );
 }
 
+sub parse {
+    my $self = shift;
+    my $res = eval { $self->{connection}->http_post( API_QUERY, { query => $self->{query} } ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to parse query' );
+    }
+    return $res->{bindVars};
+}
+
 sub bind_vars {
-    return shift->{bind_vars}->get_all();
+    my $self = shift;
+    if ( @_ == 0 ) {
+        return $self->{bind_vars}->get_all();
+    }
+    else {
+        my $name = shift;
+        return $self->{bind_vars}->get($name);
+    }
 }
 
 sub bind {
@@ -46,7 +62,7 @@ sub bind {
         my ( $key, $value ) = @_;
         $self->{bind_vars}->set( $key => $value );
     }
-    return;
+    return $self;
 }
 
 sub _build_data {
@@ -124,7 +140,7 @@ $query is AQL statement.
 
 =head2 execute($options)
 
-Execute AQL query and returns cursor(instance of ArangoDB::Cursor).
+Execute AQL query and returns cursor(instance of L<ArangoDB::Cursor>).
 
 $options is query options.The attributes of $options are:
 
@@ -140,9 +156,15 @@ Boolean flag that indicates whether the number of documents found should be retu
 
 =back
 
-=head2 bind_vars()
+=head2 parse($query)
 
-Returns all bind variables.
+Parse a query string without executing.
+Return ARRAY reference of bind variable names.
+
+=head2 bind_vars($name)
+
+Returns bind variable based on $name.
+If $name does not passed, returns all bind variables as HASH reference.
 
 =head2 bind($vars)
 =head2 bind($key => $val)
@@ -152,15 +174,6 @@ $vars is HASH reference that set of key/value pairs.
 
 =head2 validate_query()
 
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=head1 SEE ALSO
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+Validate a query string without executing
 
 =cut

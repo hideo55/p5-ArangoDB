@@ -1,5 +1,7 @@
+use strict;
 use Test::More;
 use Test::Fatal qw(lives_ok dies_ok exception);
+use Test::Mock::Guard;
 use ArangoDB;
 use JSON;
 
@@ -21,6 +23,12 @@ sub init {
     map { $_->drop } @{ $db->collections };
 }
 
+subtest 'Failed to get document' => sub{
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('test1');
+    like exception { $coll->document() }, qr/^Failed to get the document/;  
+};
+
 subtest 'create document' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('foo');
@@ -32,6 +40,17 @@ subtest 'create document' => sub {
 
     my $doc2 = $coll->document( $doc1->id );
     is_deeply $doc1, $doc2;
+
+    my $e = exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_post => sub {die}
+            }
+        );
+        $coll->save( { foo => 'bar' } );
+    };
+    like $e, qr/^Failed to save the new document/;
+
 };
 
 subtest 'Delete document' => sub {
@@ -40,11 +59,20 @@ subtest 'Delete document' => sub {
     my $doc  = $coll->save( { foo => 'bar' } );
     ok $doc;
     $coll->delete($doc);
-    my $e = exception { $coll->document($doc) };
-    like $e, qr/^Failed to get the document/;
+    like exception { $coll->document($doc) }, qr/^Failed to get the document/;
+
+    my $e = exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_delete => sub {die}
+            }
+        );
+        $coll->delete($doc);
+    };
+    like $e, qr/^Failed to delete the document/;
 };
 
-subtest 'Repace document' => sub {
+subtest 'Replace document' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('foo');
     my $doc1 = $coll->save( { foo => 'bar' } );
@@ -53,6 +81,57 @@ subtest 'Repace document' => sub {
     is $doc1, $doc2;
     ok $doc1->revision < $doc2->revision;
     is_deeply $doc2->content, { foo => 'baz' };
+
+    my $e = exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_put => sub {die}
+            }
+        );
+        $coll->replace( $doc1, { foo => 'bar' } );
+    };
+    like $e, qr/^Failed to replace the document/;
+
+};
+
+subtest 'bulk import - header' => sub {
+    my $db = ArangoDB->new($config);
+    my $res = $db->collection('di1')->bulk_import( [qw/fistsName lastName age gender/],
+        [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
+    ok !$res->{failed};
+    is $res->{created}, 2;
+
+    my $e = exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_post_raw => sub {die}
+            }
+        );
+        $db->collection('di1')->bulk_import( [qw/fistsName lastName age gender/],
+            [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
+    };
+    
+    like $e, qr/^Failed to bulk import to the collection/;
+
+};
+
+subtest 'bulk import - self-contained' => sub {
+    my $db  = ArangoDB->new($config);
+    my $res = $db->collection('di2')
+        ->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
+    ok !$res->{failed};
+    is $res->{created}, 2;
+
+    my $e = exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_post_raw => sub {die}
+            }
+        );
+        $db->collection('di1')->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
+    };
+    
+    like $e, qr/^Failed to bulk import to the collection/;
 };
 
 done_testing;

@@ -6,12 +6,43 @@ use ArangoDB::Document;
 use ArangoDB::Constants qw(:api);
 use Class::Accessor::Lite ( ro => [qw/id length/], );
 
+BEGIN {
+    if ( eval { require Data::Clone; 1; } ) {
+        *_clone = \&Data::Clone::clone;
+    }
+    else {
+
+        # Clone nested ARRAY and HASH reference data structure.
+        *_clone = sub {
+            my $orig = shift;
+            return unless defined $orig;
+            my $reftype = ref $orig;
+            return $orig unless defined $reftype;
+
+            if ( $reftype eq 'ARRAY' ) {
+                return [ map { !ref($_) ? $_ : _clone($_) } @$orig ];
+            }
+            elsif ( $reftype eq 'HASH' ) {
+                return { map { !ref($_) ? $_ : _clone($_) } %$orig };
+            }
+        };
+    }
+}
+
 sub new {
     my ( $class, $conn, $cursor ) = @_;
+    my $len = 0;
+    if ( defined $cursor->{count} ) {
+        $len = $cursor->{count};
+    }
+    elsif ( defined $cursor->{result} && ref( $cursor->{result} ) eq 'ARRAY' ) {
+        $len = scalar @{ $cursor->{result} };
+    }
+
     my $self = bless {
         connection => $conn,
         id         => $cursor->{id},
-        length     => $cursor->{count} || scalar( @{ $cursor->{result} } ),
+        length     => $len,
         has_more   => $cursor->{hasMore},
         position   => 0,
         result     => $cursor->{result} || [],
@@ -22,7 +53,7 @@ sub new {
 sub next {
     my $self = shift;
     if ( $self->{position} < $self->{length} || $self->_get_next_batch() ) {
-        return ArangoDB::Document->new( $self->{result}->[ $self->{position}++ ] );
+        return ArangoDB::Document->new( _clone( $self->{result}->[ $self->{position}++ ] ) );
     }
     return;
 }
@@ -82,23 +113,10 @@ Constructor.
 
 =head2 next()
 
-Returns next document.
+Returns next document(Instance of L<ArangoDB::Document>).
 
 =head2 delete()
 
 Delete cursor.
-
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=head1 SEE ALSO
-
-ArangoDB websie L<http://www.arangodb.org/>
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
 
 =cut

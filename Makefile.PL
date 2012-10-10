@@ -10,6 +10,9 @@ requires 'Scalar::Util';
 requires 'List::MoreUtils';
 requires 'Furl';
 requires 'MIME::Base64';
+requires 'Data::Util';
+
+recommends 'Data::Clone';
 
 tests 't/*.t';
 author_tests 'xt';

@@ -64,7 +64,7 @@ sub http_put {
 sub http_delete {
     my ( $self, $path ) = @_;
     my $url     = $self->{api_str} . $path;
-    my $headers = $self->_build_headers($url);
+    my $headers = $self->_build_headers();
     my $res     = $self->{_http_agent}->delete( $url, $headers );
     return $self->_parse_response($res);
 }
@@ -86,8 +86,8 @@ sub _build_headers {
         push @headers, Authorization => sprintf( '%s %s', $options->auth_type, $auth_value );
     }
 
-    if ( my $conn = $options->connection ) {
-        push @headers, Connection => $conn;
+    if ( $options->keep_alive ) {
+        push @headers, Connection => 'Keep-Alive';
     }
 
     return \@headers;
@@ -128,63 +128,32 @@ The ArangoDB::Connection class creates a connection to the ArangoDB server.
 =head2 new($options)
 
 Constructor.
-$options if connection option. The attributes of $options are:
-
-=over 4
-
-=item host
-
-Host name
-
-=item port
-
-Port number
-
-=item timeout
-
-Connection timeout
-
-=item auth_user
-
-User name for authentication
-
-=item auth_passwd
-
-Password for authentication
-
-=item auth_type
-
-Authentication method.
-Supporting "Basic" only.
-
-=item connection
-
-HTTP Connection header('Close' or 'Keep-Alive').
-Default value is 'Close'.
-
-=item use_proxy
-
-If it is true,use $ENV{http_poxy} as HTTP Proxy server.
+$options if connection option.
+It is arguments of L<ArangoDB::ConnectOptions>.
 
 =back
 
 =head2 http_get($path)
 
+Send GET HTTP request to $path.
+
 =head2 http_post($path,$data)
+
+Send POST HTTP request to $path with $data.
+$data is encoded to JSON.
+
+=head2 http_post_raw($path,$raw_data)
+
+Send POST HTTP request to $path with $raw_data.
+$raw_data isn't encoded to JSON.
 
 =haed2 http_put($path,$data)
 
+Send PUT HTTP request to $path with $data.
+$data is encoded to JSON.
+
 =head2 http_delete($path)
 
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=head1 SEE ALSO
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
+Send DELETE HTTP request to $path.
 
 =cut

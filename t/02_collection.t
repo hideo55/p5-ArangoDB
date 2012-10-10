@@ -1,3 +1,4 @@
+use strict;
 use Test::More;
 use Test::Fatal qw(lives_ok dies_ok exception);
 use Test::Mock::Guard;
@@ -26,7 +27,7 @@ subtest 'SYNOPSYS' => sub {
     $db->collection('my_collection')->save( { x => 42, y => { a => 1, b => 2, } } );    # Create document
     $db->collection('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
     $db->collection('my_collection')->name('new_name');                                 # rename the collection
-    $db->collection('my_collection')->ensure_hash_index( [qw/y/] );
+    $db->collection('new_name')->ensure_hash_index( [qw/y/] );
     my $cur = $db->collection('new_name')->by_example( { x => 42 } );
     my @docs;
     while ( my $doc = $cur->next() ) {
@@ -44,13 +45,57 @@ subtest 'create collection' => sub {
     isa_ok $coll, 'ArangoDB::Collection';
     is $coll->name, 'foo';
     ok $coll->is_loaded;
+    ok !$coll->is_newborn;
+    ok !$coll->is_unloaded;
+    ok !$coll->is_being_unloaded;
+    ok !$coll->is_deleted;
+    ok !$coll->is_corrupted;
+
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection' => { http_post => sub {die}, } );
+        $db->create('bar');
+    };
+    like $e, qr/^Failed to create collection/;
+    $db->collection('baz');
+};
+
+subtest 'get collection' => sub {
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->find('bar');
+    ok !defined $coll;
+    $coll = $db->find('foo');
+    ok $coll;
+};
+
+subtest 'get all collections' => sub {
+    my $db    = ArangoDB->new($config);
+    my $colls = $db->collections;
+    is scalar @$colls, 2;
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection', { http_get => sub {die}, } );
+        $db->collections();
+    };
+    like $e, qr/^Failed to get collections/;
+};
+
+subtest 'drop collection' => sub {
+    my $db = ArangoDB->new($config);
+    lives_ok {
+        $db->drop('baz');
+    };
+
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection', { http_delete => sub {die}, } );
+        $db->drop('baz');
+    };
+    like $e, qr/^Failed to drop collection/;
 };
 
 subtest 'collection name confliction' => sub {
     my $db = ArangoDB->new($config);
     dies_ok { $db->create("foo") } 'Attempt to create collection that already exist name';
     lives_ok { $db->drop('foo') } 'Drop collection';
-    lives_ok { $db->create('foo'); } 'Create collection with name that dropped collection';
+    lives_ok { $db->create( 'foo', { waitForSync => 1, } ); } 'Create collection with name that dropped collection';
 };
 
 subtest 'rename collection' => sub {
@@ -102,6 +147,9 @@ subtest 'figures' => sub {
     is ref($stats), 'HASH';
     is $stats->{alive}{count}, $coll->figure('alive-count');
     is $stats->{alive}{size},  $coll->figure('alive-size');
+    is $coll->figure('count'), 2;
+    ok $coll->figure('journalSize');
+    ok !defined $coll->figure('foo');
 };
 
 subtest 'drop collection by name' => sub {
@@ -144,23 +192,6 @@ subtest 'fail truncate collection' => sub {
     my $coll = $db->collection('foo');
     my $e    = exception { $coll->truncate() };
     like $e, qr/^Failed to truncate the collection\(foo\)/;
-};
-
-subtest 'bulk import - header' => sub {
-    my $db = ArangoDB->new($config);
-    my $res = $db->collection('di1')->bulk_import( [qw/fistsName lastName age gender/],
-        [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
-    ok !$res->{failed};
-    is $res->{created}, 2;
-};
-
-subtest 'bulk import - self-contained' => sub {
-    my $db  = ArangoDB->new($config);
-    my $res = $db->collection('di2')->bulk_import_self_contained(
-        [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ]
-    );
-    ok !$res->{failed};
-    is $res->{created}, 2;
 };
 
 done_testing;

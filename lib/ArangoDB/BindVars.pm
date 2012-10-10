@@ -19,7 +19,9 @@ sub get {
 sub set {
     my ( $self, $name, $val ) = @_;
     if ( ArangoDB::BindVars::Validator::is_hash_ref($name) ) {
-        ArangoDB::BindVars::Validator::validate($name);
+        for my $value ( values %$name ) {
+            ArangoDB::BindVars::Validator::validate($value);
+        }
         $self->{_values} = $name;
     }
     elsif ( ArangoDB::BindVars::Validator::is_integer($name) || ArangoDB::BindVars::Validator::is_string($name) ) {
@@ -34,35 +36,16 @@ sub count {
 
 {
 
-    package#Hiding package
+    package    #Hiding package
         ArangoDB::BindVars::Validator;
     use strict;
     use warnings;
     use Scalar::Util qw(looks_like_number);
+    use Data::Util qw(:check);
     use ArangoDB::ClientException;
 
     sub is_bool {
         !defined( $_[0] ) || $_[0] eq "" || "$_[0]" eq '1' || "$_[0]" eq '0';
-    }
-
-    sub is_string {
-        defined( $_[0] ) && ref( \$_[0] ) eq 'SCALAR';
-    }
-
-    sub is_number {
-        !ref( $_[0] ) && looks_like_number( $_[0] );
-    }
-
-    sub is_integer {
-        defined( $_[0] ) && !ref( $_[0] ) && $_[0] =~ /^-?[0-9]+$/;
-    }
-
-    sub is_array_ref {
-        defined( $_[0] ) && ref( $_[0] ) eq 'ARRAY';
-    }
-
-    sub is_hash_ref {
-        defined( $_[0] ) && ref( $_[0] ) eq 'HASH';
     }
 
     sub validate {
@@ -110,16 +93,5 @@ Returns bind variable.
 
 Set bind variable(s).
 $vars is HASH reference that set of key/value pairs.
-
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=head1 SEE ALSO
-
-=head1 LICENSE
-
-This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself.
 
 =cut
