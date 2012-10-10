@@ -336,6 +336,25 @@ sub document {
     return ArangoDB::Document->new($res);
 }
 
+=pod 
+
+=head2 all_document_ids()
+
+Returns list of document id in the collection.
+
+=cut
+
+sub all_document_ids {
+    my $self = shift;
+    my $api  = API_DOCUMENT . '?collection=' . $self->{id};
+    my $res  = eval { $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, "Failed to get the all document ids in the collection(%s)" );
+    }
+    my @doc_ids = map {m|^/_api/document/(.+)$|} @{ $res->{documents} };
+    return \@doc_ids;
+}
+
 =pod
 
 =head2 save($data)
@@ -531,17 +550,17 @@ sub save_edge {
 
 =pod
 
-=head2 replace_edge($edge_id)
+=head2 replace_edge($edge_id,$data)
 
 Replace edge in the collection.
 
 =cut
 
 sub replace_edge {
-    my ( $self, $edge_id ) = @_;
+    my ( $self, $edge_id, $data ) = @_;
     $edge_id = defined $edge_id ? $edge_id : q{};
     my $api = API_EDGE . '/' . $edge_id;
-    my $res = eval { $self->{connection}->http_get($api) };
+    eval { $self->{connection}->http_put( $api, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to replace the edge($edge_id) in the collection(%s)" );
     }
@@ -1040,7 +1059,7 @@ sub _put_to_this {
 
 sub _get_edges {
     my ( $self, $vertex, $direction ) = @_;
-    my $api = API_EDGE . '/' . $self->{id} . '?vertex=' . $vertex . '&direction=' . $direction;
+    my $api = API_EDGES . '/' . $self->{id} . '?vertex=' . $vertex . '&direction=' . $direction;
     my $res = eval { $self->{connection}->http_get($api) };
     if ($@) {
         $self->_server_error_handler( $@,

@@ -10,7 +10,6 @@ if ( !$ENV{TEST_ARANGODB_PORT} ) {
 }
 
 my $port   = $ENV{TEST_ARANGODB_PORT};
-my $port   = $ENV{TEST_ARANGODB_PORT};
 my $config = {
     host => 'localhost',
     port => $port,
@@ -23,10 +22,10 @@ sub init {
     map { $_->drop } @{ $db->collections };
 }
 
-subtest 'Failed to get document' => sub{
+subtest 'Failed to get document' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('test1');
-    like exception { $coll->document() }, qr/^Failed to get the document/;  
+    like exception { $coll->document() }, qr/^Failed to get the document/;
 };
 
 subtest 'create document' => sub {
@@ -96,7 +95,7 @@ subtest 'Replace document' => sub {
 
 subtest 'bulk import - header' => sub {
     my $db = ArangoDB->new($config);
-    my $res = $db->collection('di1')->bulk_import( [qw/fistsName lastName age gender/],
+    my $res = $db->collection('di')->bulk_import( [qw/fistsName lastName age gender/],
         [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
     ok !$res->{failed};
     is $res->{created}, 2;
@@ -107,17 +106,17 @@ subtest 'bulk import - header' => sub {
                 http_post_raw => sub {die}
             }
         );
-        $db->collection('di1')->bulk_import( [qw/fistsName lastName age gender/],
+        $db->collection('di')->bulk_import( [qw/fistsName lastName age gender/],
             [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
     };
-    
+
     like $e, qr/^Failed to bulk import to the collection/;
 
 };
 
 subtest 'bulk import - self-contained' => sub {
     my $db  = ArangoDB->new($config);
-    my $res = $db->collection('di2')
+    my $res = $db->collection('di')
         ->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
     ok !$res->{failed};
     is $res->{created}, 2;
@@ -128,10 +127,24 @@ subtest 'bulk import - self-contained' => sub {
                 http_post_raw => sub {die}
             }
         );
-        $db->collection('di1')->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
+        $db->collection('di')
+            ->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
     };
-    
+
     like $e, qr/^Failed to bulk import to the collection/;
+};
+
+subtest 'get all document id' => sub {
+    my $db      = ArangoDB->new($config);
+    my $coll = $db->collection('di');
+    my $doc_ids = $coll->all_document_ids;
+    is scalar @$doc_ids, 4;
+    
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection' => { http_get => sub {die} } );
+        $coll->all_document_ids;
+    };
+    like $e, qr/^Failed to get the all document ids/;
 };
 
 done_testing;
