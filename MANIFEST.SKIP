@@ -21,3 +21,5 @@
 \.sw[po]$
 \.project
 \.gitignore
+MYMETA\.yml
+MYMETA\.json 
