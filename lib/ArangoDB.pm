@@ -79,8 +79,8 @@ sub truncate {
 }
 
 sub query {
-    my ( $self, $query, $options ) = @_;
-    return ArangoDB::Statement->new( $self->{connection}, $query, $options );
+    my ( $self, $query ) = @_;
+    return ArangoDB::Statement->new( $self->{connection}, $query );
 }
 
 sub _server_error_handler {

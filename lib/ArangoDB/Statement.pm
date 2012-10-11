@@ -43,6 +43,16 @@ sub parse {
     return $res->{bindVars};
 }
 
+sub explain {
+    my $self = shift;
+    my $data = { query => $self->{query}, bindVars => $self->{bind_vars}->get_all(), };
+    my $res  = eval { $self->{connection}->http_post( API_EXPLAIN, $data ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to explain query' );
+    }
+    return $res->{plan};
+}
+
 sub bind_vars {
     my $self = shift;
     if ( @_ == 0 ) {
@@ -157,10 +167,15 @@ Boolean flag that indicates whether the number of documents found should be retu
 
 =back
 
-=head2 parse($query)
+=head2 parse()
 
 Parse a query string without executing.
 Return ARRAY reference of bind variable names.
+
+=head2 explain()
+
+Get execution plan of query.
+Returns ARRAY reference.
 
 =head2 bind_vars($name)
 

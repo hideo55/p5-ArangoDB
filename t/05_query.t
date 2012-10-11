@@ -135,6 +135,12 @@ subtest 'parse query' => sub {
     like $e, qr/^Failed to parse query/;
 };
 
+subtest 'explain query' => sub{
+    my $db    = ArangoDB->new($config);
+    my $plan = $db->query('FOR u IN users SORT u.name ASC RETURN u')->explain();
+    ok $plan && ref($plan) eq 'ARRAY';
+};
+
 done_testing;
 
 __END__
