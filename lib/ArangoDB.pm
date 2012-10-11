@@ -122,20 +122,25 @@ ArangoDB - ArangoDB client for Perl.
       keep_alive => 1,
   });
   
+  # Find or create collection
+  my $foo = $db->foo;
+  
   # Create new document
-  $db->collection('my_collection')->save({ x => 42, y => { a => 1, b => 2, } });
-  $db->collection('my_collection')->save({ x => 1, y => { a => 1, b => 10, } });
-  $db->collection('my_collection')->name('new_name'); # rename the collection
+  $foo->save({ x => 42, y => { a => 1, b => 2, } });
+  $foo->save({ x => 1, y => { a => 1, b => 10, } });
+  $foo->name('new_name'); # rename the collection
   
   # Create hash index.
-  $db->collection('my_collection')->create_hash_index([qw/x y/]);
+  $foo->create_hash_index([qw/x y/]);
   
   # Simple query
-  my $cursor = $db->collection('new_name')->by_example({ b => 2 });
+  my $cursor = $db->new_name->by_example({ b => 2 });
+  while( my $doc = $cursor->next ){
+      # do something
+  }
   
-  # Drop collection
-  $db->drop(); # Drop the collection
-  
+  # AQL
+  my $cur = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u')->bind({ age => 19 })->execute();
 
 =head1 DESCRIPTION
 
@@ -143,7 +148,7 @@ ArangoDB is ArangoDB client for Perl.
 
 =head1 SUPPORT API VERSION
 
-This supports ArangoDB API implementation 1.0.
+This supports ArangoDB API implementation 1.01.
 
 =head1 METHODS
 
@@ -225,7 +230,7 @@ Same as `$db->collection($name)->truncate();`.
 
 =head2 get_index($index_id)
 
-Returns instance of L<ArangoDB::Index>.
+Returns instance of ArangoDB::Index::*.
 
 =head2 drop_index($index_id)
 
