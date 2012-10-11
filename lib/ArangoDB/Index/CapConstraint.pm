@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::CapConstraint
+ArangoDB::Index::CapConstraint - 
 
 =head1 DESCRIPTION
 

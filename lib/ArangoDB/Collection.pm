@@ -23,7 +23,7 @@ use overload
 
 =head1 NAME
 
-ArangoDB::Collection
+ArangoDB::Collection - 
 
 =head1 DESCRIPTION
 

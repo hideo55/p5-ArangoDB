@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::Geo;
+ArangoDB::Index::Geo - 
 
 =head1 DESCRIPTION
 
@@ -44,7 +44,7 @@ List of attribure paths.
 
 If it is true, This geo-spatial index is using geojson format.
 
-=haed2 constraint()
+=head2 constraint()
 
 If it is true, this index is geo-spatial constraint.
 

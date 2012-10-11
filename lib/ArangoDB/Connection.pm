@@ -114,7 +114,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Connection
+ArangoDB::Connection -
 
 =head1 DESCRIPTION
 

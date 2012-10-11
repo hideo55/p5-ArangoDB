@@ -110,7 +110,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Statement
+ArangoDB::Statementi -
 
 =head1 SYNOPSIS
 

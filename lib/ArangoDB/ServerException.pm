@@ -10,7 +10,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::ServerException
+ArangoDB::ServerException -
 
 =head1 DESCRIPTION
 

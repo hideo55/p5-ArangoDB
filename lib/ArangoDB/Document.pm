@@ -33,7 +33,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Document
+ArangoDB::Document -
 
 =head1 DESCRIPTION
 

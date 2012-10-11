@@ -26,7 +26,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::ClientException
+ArangoDB::ClientException - 
 
 =head1 DESCRIPTION
 

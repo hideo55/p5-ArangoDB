@@ -27,7 +27,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Edge
+ArangoDB::Edge - 
 
 =head1 DESCRIPTION
 

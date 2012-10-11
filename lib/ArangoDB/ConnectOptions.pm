@@ -64,7 +64,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::ConnectOptions;
+ArangoDB::ConnectOptions -
 
 =head1 DESCRIPTION
 

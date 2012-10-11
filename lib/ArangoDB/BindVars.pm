@@ -68,7 +68,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::BindVars
+ArangoDB::BindVars - 
 
 =head1 DESCRIPTION
 

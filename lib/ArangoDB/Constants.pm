@@ -76,7 +76,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Constants;
+ArangoDB::Constants -
 
 =head1 DESCRIPTION
 

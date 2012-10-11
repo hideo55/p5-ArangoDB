@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Skiplit
+ArangoDB::Index::Skiplit - 
 
 =head1 DESCRIPTION
 

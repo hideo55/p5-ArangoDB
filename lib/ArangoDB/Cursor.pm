@@ -99,7 +99,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Cursor
+ArangoDB::Cursor -
 
 =head1 DESCRIPTION
 

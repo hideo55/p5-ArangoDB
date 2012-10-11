@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::Primary;
+ArangoDB::Index::Primary -
 
 =head1 DESCRIPTION
 

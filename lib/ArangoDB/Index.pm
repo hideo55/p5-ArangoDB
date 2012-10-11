@@ -13,7 +13,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index
+ArangoDB::Index -
 
 =head1 DESCRIPTION
 
