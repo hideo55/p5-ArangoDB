@@ -4,7 +4,7 @@ use warnings;
 use Carp qw(croak);
 use ArangoDB::Document;
 use ArangoDB::Constants qw(:api);
-use Class::Accessor::Lite ( ro => [qw/id length/], );
+use Class::Accessor::Lite ( ro => [qw/id count length/], );
 
 BEGIN {
     if ( eval { require Data::Clone; 1; } ) {
@@ -32,10 +32,7 @@ BEGIN {
 sub new {
     my ( $class, $conn, $cursor ) = @_;
     my $len = 0;
-    if ( defined $cursor->{count} ) {
-        $len = $cursor->{count};
-    }
-    elsif ( defined $cursor->{result} && ref( $cursor->{result} ) eq 'ARRAY' ) {
+    if ( defined $cursor->{result} && ref( $cursor->{result} ) eq 'ARRAY' ) {
         $len = scalar @{ $cursor->{result} };
     }
 
@@ -43,6 +40,7 @@ sub new {
         connection => $conn,
         id         => $cursor->{id},
         length     => $len,
+        count      => $cursor->{count},
         has_more   => $cursor->{hasMore},
         position   => 0,
         result     => $cursor->{result} || [],

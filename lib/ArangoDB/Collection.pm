@@ -8,8 +8,11 @@ use Class::Accessor::Lite ( ro => [qw/id status/], );
 use ArangoDB::Constants qw(:api :status);
 use ArangoDB::Document;
 use ArangoDB::Edge;
-use ArangoDB::Index;
-use ArangoDB::CapConstraint;
+use ArangoDB::Index::Primary;
+use ArangoDB::Index::Hash;
+use ArangoDB::Index::Skiplist;
+use ArangoDB::Index::Geo;
+use ArangoDB::Index::CapConstraint;
 use ArangoDB::Cursor;
 use ArangoDB::ClientException;
 use overload
@@ -837,7 +840,7 @@ sub ensure_hash_index {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create hash index on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return ArangoDB::Index::Hash->new($res);
 }
 
 =pod
@@ -858,7 +861,7 @@ sub ensure_unique_constraint {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create unique hash index on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return ArangoDB::Index::Hash->new($res);
 }
 
 =pod
@@ -879,7 +882,7 @@ sub ensure_skiplist {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return ArangoDB::Index::Skiplist->new($res);
 }
 
 =pod
@@ -900,7 +903,7 @@ sub ensure_unique_skiplist {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create unique skiplist index on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return ArangoDB::Index::Skiplist->new($res);
 }
 
 =pod
@@ -927,7 +930,7 @@ sub ensure_geo_index {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return ArangoDB::Index::Geo->new($res);
 }
 
 =pod
@@ -954,9 +957,9 @@ sub ensure_geo_constraint {
     };
     my $res = eval { $self->{connection}->http_post( $api, $data ) };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
+        $self->_server_error_handler( $@, 'Failed to create geo constraint on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return ArangoDB::Index::Geo->new($res);
 }
 
 =pod
@@ -975,7 +978,7 @@ sub ensure_cap_constraint {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create cap constraint on the collection(%s)' );
     }
-    return ArangoDB::CapConstraint->new($res);
+    return ArangoDB::Index::CapConstraint->new($res);
 }
 
 =pod
@@ -994,7 +997,7 @@ sub get_index {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    return ArangoDB::Index->new($res);
+    return _get_index_instance($res);
 }
 
 =pod
@@ -1018,20 +1021,20 @@ sub drop_index {
 
 =pod
 
-=head2 get_indexes()
+=head2 indexes()
 
 Returns list of indexes of the collection.
 
 =cut
 
-sub get_indexes {
+sub indexes {
     my $self = shift;
     my $api  = API_INDEX . '?collection=' . $self->{id};
     my $res  = eval { $self->{connection}->http_get($api) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    my @indexes = map { ArangoDB::Index->new($_) } @{ $res->{indexes} };
+    my @indexes = map { _get_index_instance($_) } @{ $res->{indexes} };
     return \@indexes;
 }
 
@@ -1067,6 +1070,27 @@ sub _get_edges {
     }
     my @edges = map { ArangoDB::Edge->new($_) } @{ $res->{edges} };
     return \@edges;
+}
+
+# get instance of index
+sub _get_index_instance {
+    my $index = shift;
+    my $type = $index->{type} || q{};
+    if ( $type eq 'primary' ) {
+        return ArangoDB::Index::Primary->new($index);
+    }
+    elsif ( $type eq 'hash' ) {
+        return ArangoDB::Index::Hash->new($index);
+    }
+    elsif ( $type eq 'sliplist' ) {
+        return ArangoDB::Index::Skiplist->new($index);
+    }
+    elsif ( $type eq 'cap' ) {
+        return ArangoDB::Index::CapConstraint->new($index);
+    }
+    else {
+        return ArangoDB::Index::Geo->new($index);
+    }
 }
 
 # Handling server error

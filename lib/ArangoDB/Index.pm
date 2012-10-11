@@ -1,7 +1,7 @@
 package ArangoDB::Index;
 use strict;
 use warnings;
-use Class::Accessor::Lite ( new => 1, ro => [qw/id fields type/] );
+use Class::Accessor::Lite ( new => 1, ro => [qw/id type/] );
 
 1;
 __END__
@@ -14,7 +14,7 @@ ArangoDB::Index
 
 =head1 DESCRIPTION
 
-Instance of ArangoDB index.
+Base class of ArangoDB index.
 
 =head1 METHODS
 

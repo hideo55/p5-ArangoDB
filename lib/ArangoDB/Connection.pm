@@ -13,10 +13,11 @@ sub new {
     my ( $class, $options ) = @_;
     my $self = bless {}, $class;
     $self->{options} = ArangoDB::ConnectOptions->new($options);
-    my $furl = Furl->new( timeout => $self->{options}->timeout );
-    if ( $self->{options}->use_proxy ) {
-        $furl->env_proxy();
-    }
+    my $furl = Furl->new(
+        timeout => $self->{options}->timeout,
+        headers => [ 'Connection' => $self->{options}->keep_alive ? 'Keep-Alive' : 'Close', ],
+        proxy   => $self->options->proxy,
+    );
     $self->{_http_agent} = $furl;
     my $api_str = 'http://' . $self->{options}->host;
     if ( my $port = $self->{options}->port ) {
@@ -86,10 +87,6 @@ sub _build_headers {
         push @headers, Authorization => sprintf( '%s %s', $options->auth_type, $auth_value );
     }
 
-    if ( $options->keep_alive ) {
-        push @headers, Connection => 'Keep-Alive';
-    }
-
     return \@headers;
 }
 
@@ -104,9 +101,9 @@ sub _parse_response {
             my $exception = ArangoDB::ServerException->new( code => $code, status => $status, detail => $details );
             die $exception;
         }
-        die ArangoDB::ServerException->new( code => $code, status => $status );
+        die ArangoDB::ServerException->new( code => $code, status => $status, detail => {} );
     }
-    my $data    = decode_json( $res->body );
+    my $data = decode_json( $res->body );
     return $data;
 }
 

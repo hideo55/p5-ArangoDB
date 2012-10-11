@@ -52,7 +52,7 @@ subtest 'get edges' => sub {
     $coll->save_edge( $doc3, $doc1, { e => 4 } );
 
     my $edges = $coll->any_edges($doc1);
-    ok grep { $_->isa('ArangoDB::Edge') } @$edges;
+    ok !grep { !$_->isa('ArangoDB::Edge') } @$edges;
     is scalar @$edges, 4;
 
     $edges = $coll->any_edges($doc2);

@@ -78,7 +78,7 @@ subtest 'Use bind var1' => sub {
     my $expects2 = [ { name => 'John Doe', age => 42 }, ];
     is_deeply( \@docs2, $expects2 );
 
-    my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute({ do_count => 1 });
+    my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute( { do_count => 1 } );
     is $cur3->length, 0;
 
     my $e = exception {
@@ -92,7 +92,9 @@ subtest 'batch query' => sub {
     my $db  = ArangoDB->new($config);
     my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
     $sth->bind( age => 10 );
-    my $cur = $sth->execute( { batch_size => 2, } );
+    my $cur = $sth->execute( { batch_size => 2, do_count => 1 } );
+    is $cur->count,  3;
+    is $cur->length, 2;
     my @docs;
     while ( my $doc = $cur->next() ) {
         push @docs, $doc->content;

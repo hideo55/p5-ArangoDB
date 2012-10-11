@@ -1,6 +1,7 @@
 use inc::Module::Install;
 name 'ArangoDB';
 all_from 'lib/ArangoDB.pm';
+readme_pod_from 'lib/ArangoDB.pm';
 
 requires 'parent';
 requires 'Class::Accessor::Lite';
@@ -27,5 +28,4 @@ auto_set_repository;
 auto_include;
 WriteAll;
 
-
-sub MY::test_via_harness { "\tprove --lib --rc=t/proverc t\n" }
+sub MY::test_via_harness {"\tprove --lib --rc=t/proverc t\n"}

@@ -149,10 +149,12 @@ $options is HASH reference.The attributes of $options are:
 =item host
 
 Hostname or IP address of ArangoDB server.
+Default: localhost
 
 =item port
 
 Port number of ArangoDB server.
+Default: 8529
 
 =item timeout
 
@@ -174,10 +176,11 @@ Supporting "Basic" only.
 =item keep_alive
 
 If it is true, use HTTP Keep-Alive connection.
+Default: false
 
-=item use_proxy
+=item proxy
 
-If it is true,use $ENV{http_poxy} as HTTP Proxy server.
+HTTP proxy.
 
 =back
 

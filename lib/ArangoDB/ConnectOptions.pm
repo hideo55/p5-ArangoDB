@@ -1,7 +1,7 @@
 package ArangoDB::ConnectOptions;
 use strict;
 use warnings;
-use Scalar::Util qw(blessed looks_like_number);
+use Data::Util qw(:check);
 use List::MoreUtils qw(none);
 
 sub new {
@@ -9,60 +9,51 @@ sub new {
     my %opts = ( %{ $class->_get_defaults() }, %$options );
     my $self = bless { _options => \%opts }, $class;
     $self->_validate();
-
-    for my $name ( keys %opts ) {
-        next if $class->can($name);
-        no strict 'refs';
-        *{ $class . '::' . $name } = sub {
-            $_[0]->{_options}{$name};
-        };
-    }
-
     return $self;
 }
 
-my @supported_auth_type = qw(Basic);
+for my $name (qw/host port timeout keep_alive proxy auth_type auth_user auth_passwd/) {
+    next if __PACKAGE__->can($name);
+    no strict 'refs';
+    *{ __PACKAGE__ . '::' . $name } = sub {
+        $_[0]->{_options}{$name};
+    };
+}
 
-my $validator = {
-    is_str => sub {
-        defined( $_[0] ) && ref( \$_[0] ) eq 'SCALAR';
-    },
-    is_int => sub {
-        defined( $_[0] )
-            && !ref( $_[0] )
-            && $_[0] =~ /^-?[0-9]+$/;
-    },
-};
+my @supported_auth_type = qw(Basic);
 
 sub _validate {
     my $self    = shift;
     my $options = $self->{_options};
     die "host should be a string"
-        if !$validator->{is_str}->( $options->{host} );
+        if !is_string( $options->{host} );
     die "port should be an integer"
-        if exists( $options->{port} )
-            && !$validator->{is_int}->( $options->{port} );
+        if $options->{port}
+            && !is_integer( $options->{port} );
+
+    die "timeout should be an integer"
+        if $options->{timeout}
+            && !is_integer( $options->{timeout} );
 
     if ( $options->{auth_type} && none { $options->{auth_type} eq $_ } @supported_auth_type ) {
         die sprintf( "unsupported auth_type value '%s'", $options->{auth_type} );
     }
 
-    if ( $options->{keep_alive} ) {
-        $options->{keep_alive} = 1;
-    }
+    die "auth_user should be a string"   if $options->{auth_user}   && !is_string( $options->{auth_user} );
+    die "auth_passwd should be a string" if $options->{auth_passwd} && !is_string( $options->{auth_passwd} );
 
 }
 
 sub _get_defaults {
     return {
-        host        => undef,
+        host        => 'localhost',
         port        => 8529,
         timeout     => 5,
         auth_user   => undef,
         auth_passwd => undef,
         auth_type   => undef,
         keep_alive  => 0,
-        use_proxy   => 0,
+        proxy       => undef,
     };
 }
 
@@ -91,10 +82,12 @@ $options is a connect option(Hash reference. The attributes of $options are:
 =item host
 
 Hostname or IP address of ArangoDB server.
+Default: localhost
 
 =item port
 
 Port number of ArangoDB server.
+Default: 8529
 
 =item timeout
 
@@ -116,10 +109,11 @@ Supporting "Basic" only.
 =item keep_alive
 
 If it is true, use HTTP Keep-Alive connection.
+Default: false
 
-=item use_proxy
+=item proxy
 
-If it is true,use $ENV{http_poxy} as HTTP Proxy server.
+HTTP proxy.
 
 =back
 

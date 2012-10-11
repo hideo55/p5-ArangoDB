@@ -9,6 +9,7 @@ use overload
     },
     fallback => 1;
 use Carp qw(croak);
+use JSON ();
 use ArangoDB::Cursor;
 use ArangoDB::BindVars;
 use ArangoDB::Constants qw(:api);
@@ -69,7 +70,7 @@ sub _build_data {
     my ( $self, $options ) = @_;
     my $data = {
         query => $self->{query},
-        count => $options->{do_count},
+        count => $options->{do_count} ? JSON::true : JSON::false,
     };
 
     if ( $self->{bind_vars}->count > 0 ) {
