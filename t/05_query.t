@@ -139,6 +139,7 @@ subtest 'explain query' => sub{
     my $db    = ArangoDB->new($config);
     my $plan = $db->query('FOR u IN users SORT u.name ASC RETURN u')->explain();
     ok $plan && ref($plan) eq 'ARRAY';
+    like exception { $db->query('FOR u IN users SORT u.name ASC RETURN ')->explain(); }, qr/^Failed to explain query/;
 };
 
 done_testing;
