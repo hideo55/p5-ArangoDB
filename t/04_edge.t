@@ -36,6 +36,16 @@ subtest 'create edge' => sub {
     is $edge1->to,   $doc2->id;
     my $edge2 = $coll->edge($edge1);
     is_deeply( $edge1, $edge2 );
+
+    like exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_post => sub {die}
+            }
+        );
+        $coll->save_edge( $doc2, $doc1 );
+    }, qr/Failed to save the new edge to the collection/;
+
 };
 
 subtest 'get edges' => sub {
@@ -46,10 +56,14 @@ subtest 'get edges' => sub {
     my $doc3 = $coll->save( { foo => 3 } );
     my $doc4 = $coll->save( { foo => 4 } );
 
-    $coll->save_edge( $doc1, $doc2, { e => 1 } );
+    my $e1 = $coll->save_edge( $doc1, $doc2, { e => 1 } );
     $coll->save_edge( $doc1, $doc3, { e => 2 } );
     $coll->save_edge( $doc2, $doc1, { e => 4 } );
     $coll->save_edge( $doc3, $doc1, { e => 4 } );
+
+    my $e1_1 = $coll->edge($e1);
+    is_deeply $e1_1, $e1;
+    like exception { $coll->edge() }, qr/^Failed to get the edge/;
 
     my $edges = $coll->any_edges($doc1);
     ok !grep { !$_->isa('ArangoDB::Edge') } @$edges;
@@ -88,21 +102,23 @@ subtest 'get edges' => sub {
     is scalar @$edges, 0;
 };
 
-subtest 'Replace edge' => sub {
-    my $db = ArangoDB->new($config);
+subtest 'Update edge' => sub {
+    my $db   = ArangoDB->new($config);
     my $coll = $db->find('test1');
-    my $doc = $coll->first_example( { foo => 3 } );
+    my $doc  = $coll->first_example( { foo => 3 } );
     my $edge = $coll->in_edges($doc)->[0];
-    $coll->replace_edge($edge->id, { e => '2-2' });
-    my $new_edge = $coll->edge($edge->id);
+    $coll->update_edge( $edge->id, { e => '2-2' } );
+    my $new_edge = $coll->edge( $edge->id );
     is_deeply $new_edge->content, { e => '2-2' };
-        
+
+    like exception { $coll->update_edge() }, qr/^Failed to update the edge/;
+
 };
 
 subtest 'delete edges' => sub {
-    my $db = ArangoDB->new($config);
+    my $db   = ArangoDB->new($config);
     my $coll = $db->find('test1');
-    my $doc = $coll->first_example( { foo => 3 } );
+    my $doc  = $coll->first_example( { foo => 3 } );
 
     my $edges = $coll->out_edges($doc);
 
@@ -111,12 +127,15 @@ subtest 'delete edges' => sub {
             $coll->delete_edge($edge);
         }
     };
-    
-    my $e = exception {
-        my $guard = mock_guard( 'ArangoDB::Connection' => { http_delete => sub { die } } );
-        $coll->delete_edge($edges->[0]);
-    };
-    like $e, qr/^Failed to delete the edge/;
+
+    like exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_delete => sub {die}
+            }
+        );
+        $coll->delete_edge( $edges->[0] );
+    }, qr/^Failed to delete the edge/;
 
 };
 

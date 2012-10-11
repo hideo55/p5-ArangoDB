@@ -23,6 +23,14 @@ sub init {
     map { $_->drop } @{ $db->collections };
 }
 
+subtest 'AUTOLOAD' => sub {
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->new_collection;
+    isa_ok $coll, 'ArangoDB::Collection';
+    is $coll->name, 'new_collection';
+    $coll->drop;
+};
+
 subtest 'SYNOPSYS' => sub {
     my $db = ArangoDB->new($config);
     $db->collection('my_collection')->save( { x => 42, y => { a => 1, b => 2, } } );    # Create document
@@ -139,6 +147,16 @@ subtest 'count documents in collection' => sub {
     is $coll->count, 1;
     my $doc = $coll->save( { qux => 1 } );
     is $coll->count, 2;
+
+    like exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_get => sub {die}
+            }
+        );
+        $coll->count;
+    }, qr/^Failed to get the property/;
+
 };
 
 subtest 'figures' => sub {
@@ -314,6 +332,9 @@ subtest 'geo constraint' => sub {
     is $index->type, 'geo1';
     is_deeply $index->fields, [qw/loc/];
 
+    my $index2 = $coll->get_index($index);
+    isa_ok $index2, 'ArangoDB::Index::Geo';
+
     like exception {
         $coll->ensure_geo_constraint( [], 1 );
     }, qr/^Failed to create geo constraint on the collection/;
@@ -329,6 +350,9 @@ subtest 'CAP constraint' => sub {
         $coll->save( { id => $id, foo => $id * 2 } );
     }
     is $coll->count, 10;
+
+    my $cap2 = $coll->get_index($cap);
+    isa_ok $cap2, 'ArangoDB::Index::CapConstraint';
 
     like exception { $coll->ensure_cap_constraint('x') }, qr/^Failed to create cap constraint on the collection/;
 
@@ -367,6 +391,16 @@ subtest 'get index' => sub {
     like exception { $db->get_index() }, qr/^Failed to get the index/;
 };
 
+subtest 'Drop index' => sub {
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('index_test10');
 
+    my $index = $coll->ensure_hash_index( [qw/foo/] );
+    $coll->drop_index($index);
+
+    ok exception { $db->get_index($index) };
+
+    like exception { $coll->drop_index($index) }, qr/^Failed to drop the index/;
+};
 
 done_testing;

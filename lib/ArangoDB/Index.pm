@@ -1,6 +1,9 @@
 package ArangoDB::Index;
 use strict;
 use warnings;
+use overload
+    q{""}    => sub { $_[0]->id },
+    fallback => 1;
 use Class::Accessor::Lite ( new => 1, ro => [qw/id type/] );
 
 1;

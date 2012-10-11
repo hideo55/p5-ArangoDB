@@ -438,19 +438,19 @@ sub bulk_import_self_contained {
 
 =pod
 
-=head2 replace($doc_id,$data)
+=head2 update($doc_id,$data)
 
-Replace document in the collection.
+Update document in the collection.
 
 =cut
 
-sub replace {
+sub update {
     my ( $self, $doc_id, $data ) = @_;
     $doc_id = defined $doc_id ? $doc_id : q{};
     my $api = API_DOCUMENT . '/' . $doc_id;
     eval { $self->{connection}->http_put( $api, $data ); };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to replace the document($doc_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to update the document($doc_id) in the collection(%s)" );
     }
     return $self->document($doc_id);
 }
@@ -553,19 +553,19 @@ sub save_edge {
 
 =pod
 
-=head2 replace_edge($edge_id,$data)
+=head2 update_edge($edge_id,$data)
 
-Replace edge in the collection.
+Update edge in the collection.
 
 =cut
 
-sub replace_edge {
+sub update_edge {
     my ( $self, $edge_id, $data ) = @_;
     $edge_id = defined $edge_id ? $edge_id : q{};
     my $api = API_EDGE . '/' . $edge_id;
     eval { $self->{connection}->http_put( $api, $data ) };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to replace the edge($edge_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to update the edge($edge_id) in the collection(%s)" );
     }
     return $self->edge($edge_id);
 }
@@ -1082,7 +1082,7 @@ sub _get_index_instance {
     elsif ( $type eq 'hash' ) {
         return ArangoDB::Index::Hash->new($index);
     }
-    elsif ( $type eq 'sliplist' ) {
+    elsif ( $type eq 'skiplist' ) {
         return ArangoDB::Index::Skiplist->new($index);
     }
     elsif ( $type eq 'cap' ) {

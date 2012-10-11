@@ -92,6 +92,14 @@ sub _server_error_handler {
     croak $message;
 }
 
+sub AUTOLOAD {
+    my $self = shift;
+    my $name = our $AUTOLOAD;
+    $name =~ s/.*:://o;
+    return if $name eq 'DESTROY';
+    return $self->collection($name);
+}
+
 BEGIN {
     *get_index  = \&ArangoDB::Collection::get_index;
     *drop_index = \&ArangoDB::Collection::drop_index;

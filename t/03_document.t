@@ -71,12 +71,12 @@ subtest 'Delete document' => sub {
     like $e, qr/^Failed to delete the document/;
 };
 
-subtest 'Replace document' => sub {
+subtest 'Update document' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('foo');
     my $doc1 = $coll->save( { foo => 'bar' } );
     is_deeply $doc1->content, { foo => 'bar' };
-    my $doc2 = $coll->replace( $doc1, { foo => 'baz' } );
+    my $doc2 = $coll->update( $doc1, { foo => 'baz' } );
     is $doc1, $doc2;
     ok $doc1->revision < $doc2->revision;
     is_deeply $doc2->content, { foo => 'baz' };
@@ -87,9 +87,9 @@ subtest 'Replace document' => sub {
                 http_put => sub {die}
             }
         );
-        $coll->replace( $doc1, { foo => 'bar' } );
+        $coll->update( $doc1, { foo => 'bar' } );
     };
-    like $e, qr/^Failed to replace the document/;
+    like $e, qr/^Failed to update the document/;
 
 };
 
