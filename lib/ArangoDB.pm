@@ -7,10 +7,6 @@ use ArangoDB::Collection;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
 
-my $cur = $db->query( 
-    'FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u' 
-)->bind( { age => 19 } )->execute();
-
 our $VERSION = '0.01_01';
 $VERSION = eval $VERSION;
 
