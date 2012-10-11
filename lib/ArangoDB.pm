@@ -7,7 +7,7 @@ use ArangoDB::Collection;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
 
-our $VERSION = '0.01_01';
+our $VERSION = '0.01_02';
 $VERSION = eval $VERSION;
 
 sub new {

@@ -101,7 +101,9 @@ __END__
 
 ArangoDB::Cursor
 
-==head1 DESCRIPTION
+=head1 DESCRIPTION
+
+Instance of AQL Query Cursor.
 
 =head1 METHODS
 
