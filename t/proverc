@@ -1,3 +1,0 @@
-"--exec=perl -Ilib"
---color
--Pt::lib::Prove::Plugin::StartArangoDB

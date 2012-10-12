@@ -27,4 +27,4 @@ auto_set_repository;
 auto_include;
 WriteAll;
 
-sub MY::test_via_harness {"\tprove --lib --rc=t/proverc t\n"}
+sub MY::test_via_harness {"\tprove --lib -Pt::lib::Prove::Plugin::StartArangoDB t\n"}
