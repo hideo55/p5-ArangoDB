@@ -10,7 +10,7 @@ use ArangoDB::Document;
 use ArangoDB::Edge;
 use ArangoDB::Index::Primary;
 use ArangoDB::Index::Hash;
-use ArangoDB::Index::Skiplist;
+use ArangoDB::Index::SkipList;
 use ArangoDB::Index::Geo;
 use ArangoDB::Index::CapConstraint;
 use ArangoDB::Cursor;
@@ -369,7 +369,7 @@ Import multiple documents at once.
 $header is ARRAY reference of attribute names.
 $body is ARRAY reference of document values.
 
-Example
+Example:
 
     $collection->bulk_import(
         [qw/fistsName lastName age gender/],
@@ -401,6 +401,13 @@ sub bulk_import {
 Import multiple self-contained documents at once.
 
 $documents is the ARRAY reference of documents.
+
+Example:
+
+    $collection->bulk_import_self_contained( [ 
+        { name => 'foo', age => 20 }, 
+        { type => 'bar', count => 100 }, 
+    ] );
 
 =cut
 
@@ -449,7 +456,7 @@ sub save_edge {
     my $api  = API_EDGE . '?collection=' . $self->{id} . '&from=' . $from . '&to=' . $to;
     my $edge = eval {
         my $res = $self->{connection}->http_post( $api, $data );
-        $self->edge($res->{_id});
+        $self->edge( $res->{_id} );
     };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to save the new edge to the collection(%s)" );
@@ -461,7 +468,7 @@ sub save_edge {
 
 =head2 all($options)
  
-Send 'all' simple query. 
+Send 'all' simple query. (Returns instance of L<ArangoDB::Cursor>.)
 Returns all documents of in the collection.
 
 $options is query option(HASH reference).The attributes of $options are:
@@ -498,7 +505,7 @@ sub all {
 
 =item by_example($example,$options)
 
-Send 'by_example' simple query. 
+Send 'by_example' simple query. (Returns instance of L<ArangoDB::Cursor>.)
 This will find all documents matching a given example.
 
 $example is the exmaple.
@@ -515,6 +522,8 @@ The maximal amount of documents to return. (optional)
 The documents to skip in the query. (optional)
 
 =back 
+
+    my $cursor = $collection->by_example({ age => 20 });
 
 =cut
 
@@ -534,10 +543,12 @@ sub by_example {
 
 =head2 first_example($example)
 
-Send 'first_example' simple query. 
+Send 'first_example' simple query. (Returns instance of L<ArangoDB::Document>.)
 This will return the first document matching a given example.
 
 $example is the exmaple.
+
+    my $document = $collection->by_example({ age => 20 });
 
 =cut
 
@@ -555,7 +566,7 @@ sub first_example {
 
 =head2 range($attr,$lower,$upper,$options)
 
-Send 'range' simple query. 
+Send 'range' simple query. (Returns instance of L<ArangoDB::Cursor>.)
 It looks for documents in the collection with attribute between two values.
 
 Note: You must declare a skip-list index on the attribute in order to be able to use a range query.
@@ -581,6 +592,8 @@ The documents to skip in the query. (optional)
 
 =back 
 
+    my $cursor = $collection->range('age', 20, 29, { closed => 1 } );
+
 =cut
 
 sub range {
@@ -602,7 +615,7 @@ sub range {
 
 =head2 near($latitude,$longitude,$options)
 
-Send 'near' simple query. 
+Send 'near' simple query. (Returns instance of L<ArangoDB::Cursor>.)
 The default will find at most 100 documents near a given coordinate. 
 The returned list is sorted according to the distance, with the nearest document coming first.
 
@@ -614,7 +627,8 @@ $options is query option(HASH reference).The attributes of $options are:
 
 =item distance
 
-If given, the attribute key used to store the distance. (optional)
+If given, the attribute key used to store the C<distance> to document. (optional)
+C<distance> is  the distance between the given point and the document in meter.
 
 =item limit
 
@@ -629,6 +643,8 @@ The documents to skip in the query. (optional)
 If given, the identifier of the geo-index to use. (optional)
 
 =back 
+
+    $cursor = $collection->near(0,0, { limit => 20 } );
 
 =cut
 
@@ -648,20 +664,21 @@ sub near {
 
 =head2 within($latitude,$longitude,$radius,$options)
 
-Send 'within' simple query. 
+Send 'within' simple query. (Returns instance of L<ArangoDB::Cursor>.)
 This will find all documents with in a given radius around the coordinate (latitude, longitude).
 The returned list is sorted by distance.
 
 $latitude is the latitude of the coordinate.
 $longitude is longitude of the coordinate.
-$radius is the maximal radius.
+$radius is the maximal radius(meter).
 $options is query option(HASH reference).The attributes of $options are:
 
 =over 4
 
 =item distance
 
-If given, the attribute key used to store the distance. (optional)
+If given, the attribute name used to store the C<distance> to document. (optional)
+C<distance> is  the distance between the given point and the document in meter.
 
 =item limit
 
@@ -674,6 +691,8 @@ The documents to skip in the query. (optional)
 =item geo
 
 If given, the identifier of the geo-index to use. (optional)
+
+    $cursor = $collection->within(0,0, 10 * 1000, { distance => 'distance' } );
 
 =cut
 
@@ -694,14 +713,18 @@ sub within {
 
 =head2 ensure_hash_index($fileds)
 
-Create hash index for the collection.
+Create hash index for the collection. Returns instance of L<ArangoDB::Index::Hash>.
+This hash is then used in queries to locate documents in O(1) operations. 
 
 $fileds is the field of index.
+
+    $collection->ensure_hash_index([qw/user.name/]);
+    $collection->save({ user => { name => 'John', age => 42,  } });
 
 =cut
 
 sub ensure_hash_index {
-    my ( $self, $fields, $unique ) = @_;
+    my ( $self, $fields ) = @_;
     my $api  = API_INDEX . '?collection=' . $self->{id};
     my $data = { type => 'hash', unique => JSON::false, fields => $fields, };
     my $res  = eval { $self->{connection}->http_post( $api, $data ) };
@@ -715,7 +738,9 @@ sub ensure_hash_index {
 
 =head2 ensure_unique_constraint($fileds)
 
-Create unique hash index for the collection.
+Create unique hash index for the collection. Returns instance of L<ArangoDB::Index::Hash>.
+This hash is then used in queries to locate documents in O(1) operations. 
+If using unique hash index then no two documents are allowed to have the same set of attribute values.
 
 $fileds is the field of index.
 
@@ -736,9 +761,13 @@ sub ensure_unique_constraint {
 
 =head2 ensure_skiplist($fileds)
 
-Create skiplist index for the collection.
+Create skip-list index for the collection. Returns instance of L<ArangoDB::Index::SkipList>.
+This skip-list is then used in queries to locate documents within a given range. 
 
 $fileds is the field of index.
+
+    $collection->ensure_skiplist([qw/user.age/]);
+    $collection->save({ user => { name => 'John', age => 42 } });
 
 =cut
 
@@ -750,14 +779,16 @@ sub ensure_skiplist {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
     }
-    return ArangoDB::Index::Skiplist->new($res);
+    return ArangoDB::Index::SkipList->new($res);
 }
 
 =pod
 
 =head2 ensure_unique_skiplist($fileds)
 
-Create unique skiplist index for the collection.
+Create unique skip-list index for the collection. Returns instance of L<ArangoDB::Index::SkipList>.
+This skip-list is then used in queries to locate documents within a given range. 
+If using unique skip-list then no two documents are allowed to have the same set of attribute values.
 
 $fileds is the field of index.
 
@@ -771,17 +802,27 @@ sub ensure_unique_skiplist {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create unique skiplist index on the collection(%s)' );
     }
-    return ArangoDB::Index::Skiplist->new($res);
+    return ArangoDB::Index::SkipList->new($res);
 }
 
 =pod
 
 =head2 ensure_geo_index($fileds,$is_geojson)
 
-Create geo index for the collection.
+Create geo index for the collection. Returns instance of L<ArangoDB::Index::Geo>.
 
 $fileds is the field of index.
 $is_geojson is boolean flag. If it is true, then the order within the list is longitude followed by latitude. 
+
+Create an geo index for a list attribute:
+
+    $collection->ensure_geo_index( [qw/loc/] );
+    $collection->save({ loc => [0 ,0] });
+
+Create an geo index for a hash array attribute:
+
+    $collection->ensure_geo_index( [qw/location.latitude location.longitude/] );
+    $collection->save({ location => { latitude => 0, longitude => 0 } }); 
 
 =cut
 
@@ -806,6 +847,7 @@ sub ensure_geo_index {
 =head2 ensure_geo_constraint($fileds,$ignore_null)
 
 It works like ensure_geo_index() but requires that the documents contain a valid geo definition.
+Returns instance of L<ArangoDB::Index::Geo>.
 
 $fileds is the field of index.
 $ignore_null is boolean flag. If it is true, then documents with a null in location or at least one null in latitude or longitude are ignored.
@@ -834,7 +876,14 @@ sub ensure_geo_constraint {
 
 =head2 ensure_cap_constraint($size)
 
-Create cap constraint for the collection.
+Create cap constraint for the collection.Returns instance of L<ArangoDB::Index::CapConstraint>.
+It is possible to restrict the size of collection.
+
+$size is the maximal number of documents.
+
+Restrict the number of document to at most 100 documents:
+
+    $collection->ensure_cap_constraint(100);
 
 =cut
 
@@ -853,7 +902,23 @@ sub ensure_cap_constraint {
 
 =head2 get_index($index_id)
 
-Returns index object.
+Returns index object.(ArangoDB::Index::*)
+
+See:
+
+=over 4
+
+=itme * L<ArangoDB::Index::Primary>
+
+=itme * L<ArangoDB::Index::Hash>
+
+=itme * L<ArangoDB::Index::SkipList>
+
+=itme * L<ArangoDB::Index::Geo>
+
+=itme * L<ArangoDB::Index::CapConstraint>
+
+=back
 
 =cut
 
@@ -939,7 +1004,7 @@ sub _get_index_instance {
         return ArangoDB::Index::Hash->new($index);
     }
     elsif ( $type eq 'skiplist' ) {
-        return ArangoDB::Index::Skiplist->new($index);
+        return ArangoDB::Index::SkipList->new($index);
     }
     elsif ( $type eq 'cap' ) {
         return ArangoDB::Index::CapConstraint->new($index);

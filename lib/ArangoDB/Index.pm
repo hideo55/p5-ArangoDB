@@ -6,6 +6,7 @@ use overload
     fallback => 1;
 use Class::Accessor::Lite ( new => 1, ro => [qw/id type/] );
 
+
 1;
 __END__
 

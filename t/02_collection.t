@@ -249,7 +249,7 @@ subtest 'skiplist index' => sub {
     $coll->save( { foo => 10, } );
 
     my $index1 = $coll->ensure_skiplist( [qw/foo/] );
-    isa_ok $index1, 'ArangoDB::Index::Skiplist';
+    isa_ok $index1, 'ArangoDB::Index::SkipList';
     is $index1->type, 'skiplist';
     is_deeply $index1->fields, [qw/foo/];
     ok !$index1->unique;
@@ -269,7 +269,7 @@ subtest 'unique skiplist index' => sub {
     $coll->save( { foo => 10, } );
 
     my $index1 = $coll->ensure_unique_skiplist( [qw/foo/] );
-    isa_ok $index1, 'ArangoDB::Index::Skiplist';
+    isa_ok $index1, 'ArangoDB::Index::SkipList';
     is $index1->type, 'skiplist';
     is_deeply $index1->fields, [qw/foo/];
     ok $index1->unique;
