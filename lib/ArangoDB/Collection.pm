@@ -731,7 +731,7 @@ sub ensure_hash_index {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create hash index on the collection(%s)' );
     }
-    return ArangoDB::Index::Hash->new($res);
+    return ArangoDB::Index::Hash->new( $self->{connection}, $res );
 }
 
 =pod
@@ -754,7 +754,7 @@ sub ensure_unique_constraint {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create unique hash index on the collection(%s)' );
     }
-    return ArangoDB::Index::Hash->new($res);
+    return ArangoDB::Index::Hash->new( $self->{connection}, $res );
 }
 
 =pod
@@ -779,7 +779,7 @@ sub ensure_skiplist {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create skiplist index on the collection(%s)' );
     }
-    return ArangoDB::Index::SkipList->new($res);
+    return ArangoDB::Index::SkipList->new( $self->{connection}, $res );
 }
 
 =pod
@@ -802,7 +802,7 @@ sub ensure_unique_skiplist {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create unique skiplist index on the collection(%s)' );
     }
-    return ArangoDB::Index::SkipList->new($res);
+    return ArangoDB::Index::SkipList->new( $self->{connection}, $res );
 }
 
 =pod
@@ -839,7 +839,7 @@ sub ensure_geo_index {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create geo index on the collection(%s)' );
     }
-    return ArangoDB::Index::Geo->new($res);
+    return ArangoDB::Index::Geo->new( $self->{connection}, $res );
 }
 
 =pod
@@ -869,7 +869,7 @@ sub ensure_geo_constraint {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create geo constraint on the collection(%s)' );
     }
-    return ArangoDB::Index::Geo->new($res);
+    return ArangoDB::Index::Geo->new( $self->{connection}, $res );
 }
 
 =pod
@@ -895,7 +895,7 @@ sub ensure_cap_constraint {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to create cap constraint on the collection(%s)' );
     }
-    return ArangoDB::Index::CapConstraint->new($res);
+    return ArangoDB::Index::CapConstraint->new( $self->{connection}, $res );
 }
 
 =pod
@@ -930,26 +930,7 @@ sub get_index {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    return _get_index_instance($res);
-}
-
-=pod
-
-=head2 drop_index($index_id)
-
-Drop the index.
-
-=cut
-
-sub drop_index {
-    my ( $self, $index_id ) = @_;
-    $index_id = defined $index_id ? $index_id : q{};
-    my $api = API_INDEX . '/' . $index_id;
-    my $res = eval { $self->{connection}->http_delete($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to drop the index($index_id)' );
-    }
-    return;
+    return $self->_get_index_instance($res);
 }
 
 =pod
@@ -967,7 +948,7 @@ sub indexes {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    my @indexes = map { _get_index_instance($_) } @{ $res->{indexes} };
+    my @indexes = map { $self->_get_index_instance($_) } @{ $res->{indexes} };
     return \@indexes;
 }
 
@@ -995,22 +976,23 @@ sub _put_to_this {
 
 # get instance of index
 sub _get_index_instance {
-    my $index = shift;
+    my ( $self, $index ) = @_;
     my $type = $index->{type} || q{};
+    my $conn = $self->{connection};
     if ( $type eq 'primary' ) {
-        return ArangoDB::Index::Primary->new($index);
+        return ArangoDB::Index::Primary->new( $conn, $index );
     }
     elsif ( $type eq 'hash' ) {
-        return ArangoDB::Index::Hash->new($index);
+        return ArangoDB::Index::Hash->new( $conn, $index );
     }
     elsif ( $type eq 'skiplist' ) {
-        return ArangoDB::Index::SkipList->new($index);
+        return ArangoDB::Index::SkipList->new( $conn, $index );
     }
     elsif ( $type eq 'cap' ) {
-        return ArangoDB::Index::CapConstraint->new($index);
+        return ArangoDB::Index::CapConstraint->new( $conn, $index );
     }
     else {
-        return ArangoDB::Index::Geo->new($index);
+        return ArangoDB::Index::Geo->new( $conn, $index );
     }
 }
 

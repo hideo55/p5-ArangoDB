@@ -215,6 +215,7 @@ subtest 'hash index' => sub {
     isa_ok $index1, 'ArangoDB::Index::Hash';
     is $index1->type, 'hash';
     is_deeply $index1->fields, [qw/bar.a/];
+    is $index1->collection_id, $coll->id;
 
     like exception {
         $coll->ensure_hash_index( [] );
@@ -388,11 +389,11 @@ subtest 'Drop index' => sub {
     my $coll = $db->collection('index_test10');
 
     my $index = $coll->ensure_hash_index( [qw/foo/] );
-    $coll->drop_index($index);
+    $index->drop();
 
     ok exception { $db->get_index($index) };
 
-    like exception { $coll->drop_index($index) }, qr/^Failed to drop the index/;
+    like exception { $index->drop() }, qr/^Failed to drop the index/;
 };
 
 done_testing;

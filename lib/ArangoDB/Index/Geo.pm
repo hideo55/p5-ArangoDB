@@ -4,11 +4,6 @@ use warnings;
 use parent 'ArangoDB::Index';
 use Class::Accessor::Lite ( ro => [qw/fields geoJson constraint/], );
 
-sub new {
-    my $class = shift;
-    return $class->SUPER::new(@_);
-}
-
 1;
 __END__
 
@@ -47,6 +42,10 @@ If it is true, This geo-spatial index is using geojson format.
 =head2 constraint()
 
 If it is true, this index is geo-spatial constraint.
+
+=head1 SEE ALSO
+
+L<ArangoDB::Index>
 
 =head1 AUTHOR
 

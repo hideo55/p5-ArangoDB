@@ -2,6 +2,7 @@ package ArangoDB::Cursor;
 use strict;
 use warnings;
 use Carp qw(croak);
+use Scalar::Util qw(weaken);
 use ArangoDB::Document;
 use ArangoDB::Constants qw(:api);
 use Class::Accessor::Lite ( ro => [qw/id count length/], );
@@ -33,7 +34,6 @@ sub new {
     if ( defined $cursor->{result} && ref( $cursor->{result} ) eq 'ARRAY' ) {
         $len = scalar @{ $cursor->{result} };
     }
-
     my $self = bless {
         connection => $conn,
         id         => $cursor->{id},
@@ -43,6 +43,7 @@ sub new {
         position   => 0,
         result     => $cursor->{result} || [],
     }, $class;
+    weaken( $self->{connection} );
     return $self;
 }
 

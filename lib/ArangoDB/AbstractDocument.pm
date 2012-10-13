@@ -1,6 +1,7 @@
 package ArangoDB::AbstractDocument;
 use strict;
 use warnings;
+use Scalar::Util qw(weaken);
 
 use overload
     q{""}    => sub { shift->document_handle },
@@ -10,6 +11,7 @@ sub new {
     my ( $class, $conn, $doc ) = @_;
     my $self = bless {}, $class;
     $self->{connection} = $conn;
+    weaken( $self->{connection} );
     my $id  = CORE::delete $doc->{_id};
     my $rev = CORE::delete $doc->{_rev};
     $self->{is_persistent} = defined $id && defined $rev;

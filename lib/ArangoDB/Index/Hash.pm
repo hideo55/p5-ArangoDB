@@ -4,11 +4,6 @@ use warnings;
 use parent 'ArangoDB::Index';
 use Class::Accessor::Lite ( ro => [qw/fields unique/], );
 
-sub new {
-    my $class = shift;
-    return $class->SUPER::new(@_);
-}
-
 1;
 __END__
 
@@ -43,6 +38,10 @@ List of attribute paths.
 =head2 unique()
 
 If it is true, it is a unique index.
+
+=head1 SEE ALSO
+
+L<ArangoDB::Index>
 
 =head1 AUTHOR
 

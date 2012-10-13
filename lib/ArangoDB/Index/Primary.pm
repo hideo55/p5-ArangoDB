@@ -4,11 +4,6 @@ use warnings;
 use parent 'ArangoDB::Index';
 use Class::Accessor::Lite ( ro => [qw/fields/], );
 
-sub new {
-    my $class = shift;
-    return $class->SUPER::new(@_);
-}
-
 1;
 __END__
 
@@ -39,6 +34,10 @@ Index type.
 =head2 fields()
 
 List of attribure paths.
+
+=head1 SEE ALSO
+
+L<ArangoDB::Index>
 
 =head1 AUTHOR
 
