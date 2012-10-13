@@ -157,11 +157,10 @@ subtest 'simple query - range' => sub {
 
     is_deeply( [ sort { $a->{name} cmp $b->{name} } @docs ], $expect );
 
-    my $e = exception {
+    like exception {
         my $guard = mock_guard( 'ArangoDB::Connection', { http_put => sub {die}, } );
         $db->collection('test3')->range( { "x.a", 1, 2 } );
-    };
-    like $e, qr/^Failed to call Simple API\(range\) for the collection/;
+    }, qr/^Failed to call Simple API\(range\) for the collection/;
 
 };
 

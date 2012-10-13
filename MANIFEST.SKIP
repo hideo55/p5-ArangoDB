@@ -24,3 +24,4 @@
 MYMETA\.yml
 MYMETA\.json 
 ^cover_db
+^.includepath

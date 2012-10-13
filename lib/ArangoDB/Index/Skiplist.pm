@@ -1,4 +1,4 @@
-package ArangoDB::Index::Skiplist;
+package ArangoDB::Index::SkipList;
 use strict;
 use warnings;
 use parent 'ArangoDB::Index';
@@ -16,11 +16,11 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::Skiplit - An ArangoDB Skip-List Index
+ArangoDB::Index::SkipList - An ArangoDB Skip-List Index
 
 =head1 DESCRIPTION
 
-Instance of ArangoDB skiplist index.
+Instance of ArangoDB skip-list index.
 
 =head1 METHODS
 

@@ -137,7 +137,7 @@ subtest 'count documents in collection' => sub {
     my $doc = $coll->save( { baz => 1 } );
     isa_ok $doc, 'ArangoDB::Document';
     is $coll->count, 1;
-    my $doc = $coll->save( { qux => 1 } );
+    $doc = $coll->save( { qux => 1 } );
     is $coll->count, 2;
 
     like exception {
@@ -302,7 +302,7 @@ subtest 'geo index' => sub {
 
     $coll->save( { lat => 0, lon => 0 } );
     $coll->save( { lat => 0, lon => 1 } );
-    my $index = $coll->ensure_geo_index( [qw/lat lon/] );
+    $index = $coll->ensure_geo_index( [qw/lat lon/] );
     isa_ok $index, 'ArangoDB::Index::Geo';
     is $index->type, 'geo2';
     is_deeply $index->fields, [qw/lat lon/];

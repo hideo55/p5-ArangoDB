@@ -2,7 +2,7 @@ package ArangoDB::Edge;
 use strict;
 use warnings;
 use Carp qw(croak);
-use parent 'ArangoDB::Document';
+use parent 'ArangoDB::AbstractDocument';
 use ArangoDB::Constants qw(:api);
 
 sub from {
