@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::Geo - 
+ArangoDB::Index::Geo - An ArangoDB Geo Index
 
 =head1 DESCRIPTION
 
@@ -47,5 +47,9 @@ If it is true, This geo-spatial index is using geojson format.
 =head2 constraint()
 
 If it is true, this index is geo-spatial constraint.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

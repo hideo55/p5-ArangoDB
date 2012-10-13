@@ -23,18 +23,10 @@ sub init {
     map { $_->drop } @{ $db->collections };
 }
 
-subtest 'AUTOLOAD' => sub {
-    my $db   = ArangoDB->new($config);
-    my $coll = $db->new_collection;
-    isa_ok $coll, 'ArangoDB::Collection';
-    is $coll->name, 'new_collection';
-    $coll->drop;
-};
-
 subtest 'SYNOPSYS' => sub {
     my $db = ArangoDB->new($config);
     $db->collection('my_collection')->save( { x => 42, y => { a => 1, b => 2, } } );    # Create document
-    $db->collection('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
+    $db->('my_collection')->save( { x => 1,  y => { a => 1, b => 10, } } );
     $db->collection('my_collection')->name('new_name');                                 # rename the collection
     $db->collection('new_name')->ensure_hash_index( [qw/y/] );
     my $cur = $db->collection('new_name')->by_example( { x => 42 } );
@@ -44,7 +36,7 @@ subtest 'SYNOPSYS' => sub {
     }
     is scalar @docs, 1;
     is_deeply $docs[0]->content, { x => 42, y => { a => 1, b => 2, } };
-    $db->collection('new_name')->drop();                                                # Drop the collection
+    $db->('new_name')->drop();                                                # Drop the collection
 };
 
 subtest 'create collection' => sub {
@@ -90,20 +82,20 @@ subtest 'get all collections' => sub {
 subtest 'drop collection' => sub {
     my $db = ArangoDB->new($config);
     lives_ok {
-        $db->drop('baz');
+        $db->('baz')->drop;
     };
 
     my $e = exception {
         my $guard = mock_guard( 'ArangoDB::Connection', { http_delete => sub {die}, } );
-        $db->drop('baz');
+        $db->('baz')->drop;
     };
-    like $e, qr/^Failed to drop collection/;
+    like $e, qr/^Failed to drop the collection/;
 };
 
 subtest 'collection name confliction' => sub {
     my $db = ArangoDB->new($config);
     dies_ok { $db->create("foo") } 'Attempt to create collection that already exist name';
-    lives_ok { $db->drop('foo') } 'Drop collection';
+    lives_ok { $db->('foo')->drop } 'Drop collection';
     lives_ok { $db->create( 'foo', { waitForSync => 1, } ); } 'Create collection with name that dropped collection';
 };
 
@@ -175,7 +167,7 @@ subtest 'drop collection by name' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('qux');
     ok $coll;
-    $db->drop('qux');
+    $db->('qux')->drop;
     $coll = $db->find('qux');
     ok !defined $coll;
 };
@@ -200,7 +192,7 @@ subtest 'truncate collection' => sub {
     is $coll->count, 0;
     $coll->save( { save => 2 } );
     is $coll->count, 1;
-    lives_ok { $db->truncate('foo') };
+    lives_ok { $db->('foo')->truncate };
     is $coll->count, 0;
 };
 
@@ -384,11 +376,11 @@ subtest 'get index' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test9');
 
-    my $index = $db->get_index( $coll . '/0' );
+    my $index = $coll->get_index( $coll . '/0' );
     isa_ok $index, 'ArangoDB::Index::Primary';
     is $index->fields->[0], '_id';
 
-    like exception { $db->get_index() }, qr/^Failed to get the index/;
+    like exception { $coll->get_index() }, qr/^Failed to get the index/;
 };
 
 subtest 'Drop index' => sub {

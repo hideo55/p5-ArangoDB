@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::Primary -
+ArangoDB::Index::Primary - An ArangoDB Primary Index
 
 =head1 DESCRIPTION
 
@@ -39,5 +39,9 @@ Index type.
 =head2 fields()
 
 List of attribure paths.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

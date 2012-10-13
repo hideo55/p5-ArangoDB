@@ -5,7 +5,7 @@ use ArangoDB;
 
 my $db = ArangoDB->new(
     {   host        => 'localhost',
-        port        => 8529,
+        port        => 0,
         timeout     => 10,
         keep_alive  => 1,
         use_proxy   => 1,
@@ -16,6 +16,22 @@ my $db = ArangoDB->new(
 );
 
 isa_ok( $db, "ArangoDB" );
+ok exists $db->{connection}{auth_info};
+ok exception { $db->find('foo') };
+
+my $db2 = ArangoDB->new(
+    {   port      => 0,
+        auth_user => 'testuser',
+    }
+);
+ok !exists $db2->{connection}{auth_info};
+
+my $db3 = ArangoDB->new(
+    {   port      => 0,
+        auth_type => 'Basic',
+    }
+);
+ok !exists $db2->{connection}{auth_info};
 
 lives_ok {
     ArangoDB->new( { host => 'localhost' } );
@@ -55,7 +71,7 @@ like exception {
 
 like exception {
     ArangoDB->new(
-        {   host    => 'localhost',
+        {   host      => 'localhost',
             auth_user => [],
         }
     );
@@ -63,12 +79,10 @@ like exception {
 
 like exception {
     ArangoDB->new(
-        {   host    => 'localhost',
+        {   host        => 'localhost',
             auth_passwd => [],
         }
     );
 }, qr/^auth_passwd should be a string/;
-
-ok exception{ $db->find('foo') };
 
 done_testing;

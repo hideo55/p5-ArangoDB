@@ -1,29 +1,52 @@
 package ArangoDB::Document;
 use strict;
 use warnings;
-use overload
-    q{""} => sub { shift->id },
-    fallback => 1;
+use Carp qw(croak);
+use parent 'ArangoDB::AbstractDocument';
+use ArangoDB::Constants qw(:api);
+use ArangoDB::Edge;
 
-sub new {
-    my ( $class, $doc ) = @_;
-    my $self = bless {}, $class;
-    $self->{_id}      = delete $doc->{_id};
-    $self->{_rev}     = delete $doc->{_rev};
-    $self->{document} = {%$doc};
-    return $self;
+sub any_edges {
+    my ( $self, $vertex ) = @_;
+    return $self->_get_edges('any');
 }
 
-sub id {
-    $_[0]->{_id};
+sub in_edges {
+    my ( $self, $vertex ) = @_;
+    return $self->_get_edges('in');
 }
 
-sub revision {
-    $_[0]->{_rev};
+sub out_edges {
+    my ( $self, $vertex ) = @_;
+    return $self->_get_edges('out');
 }
 
-sub content {
-    return $_[0]->{document};
+sub _api_path {
+    my $self = shift;
+    return API_DOCUMENT . '/' . $self;
+}
+
+sub _get_edges {
+    my ( $self, $direction ) = @_;
+    my $vertex = $self->{_document_handle};
+    my $api    = API_EDGES . '/' . $self->{_collection_id} . '?vertex=' . $vertex . '&direction=' . $direction;
+    my $res    = eval { $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, "get edges($vertex) that related to" );
+    }
+    my $conn = $self->{connection};
+    my @edges = map { ArangoDB::Edge->new( $conn, $_ ) } @{ $res->{edges} };
+    return \@edges;
+}
+
+# Handling server error
+sub _server_error_handler {
+    my ( $self, $error, $action ) = @_;
+    my $msg = sprintf( 'Failed to %s the document(%s)', $action, $self->{_document_handle} );
+    if ( ref($error) && $error->isa('ArangoDB::ServerException') ) {
+        $msg .= ':' . ( $error->detail->{errorMessage} || q{} );
+    }
+    croak $msg;
 }
 
 1;
@@ -33,7 +56,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Document -
+ArangoDB::Document - An ArangoDB document
 
 =head1 DESCRIPTION
 
@@ -41,20 +64,64 @@ Instance of ArangoDB document.
 
 =head1 METHODS
 
-=head2 new()
+=head2 new($raw_doc)
 
 Constructor.
 
 =head2 id()
 
-Returns id of the document.
+Returns identifer of the document.
 
 =head2 revision()
 
 Returns revision of the document.
 
+=head2 collection_id()
+
+Returns collection identifier of the document.
+
+=head2 document_handle()
+
+Returns document-handle.
+
 =head2 content()
 
 Returns content of the document.
+
+=head2 get($attr_name)
+
+Get the value of an attribute of the document
+
+=head2 set($attr_name,$value)
+
+Update the value of an attribute (Does not write to database)
+
+=head2 fetch()
+
+Fetch the document data from database.
+
+=head2 save()
+
+Save the changes of document to database.
+
+=head2 delete()
+
+Delete the document from database.
+
+=head2 any_edges()
+
+Returns the list of edges starting or ending in the document.
+
+=head2 in_edges()
+
+Returns the list of edges ending in the document.
+
+=head2 out_edges()
+
+Returns the list of edges starting in the document.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

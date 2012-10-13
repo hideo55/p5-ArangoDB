@@ -63,7 +63,7 @@ subtest 'Use bind var1' => sub {
     is_deeply $sth->bind_vars, { age => 10 };
     is $sth->bind_vars('age'), 10;
 
-    my $cur = $sth->();
+    my $cur = $sth->execute();
     my @docs;
     while ( my $doc = $cur->next() ) {
         push @docs, $doc->content;
@@ -78,7 +78,7 @@ subtest 'Use bind var1' => sub {
     my $expects2 = [ { name => 'John Doe', age => 42 }, ];
     is_deeply( \@docs2, $expects2 );
 
-    my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute( { do_count => 1 } );
+    my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute( { do_count => 1, batch_size => 0 } );
     is $cur3->length, 0;
 
     my $e = exception {
@@ -135,11 +135,40 @@ subtest 'parse query' => sub {
     like $e, qr/^Failed to parse query/;
 };
 
-subtest 'explain query' => sub{
-    my $db    = ArangoDB->new($config);
+subtest 'explain query' => sub {
+    my $db   = ArangoDB->new($config);
     my $plan = $db->query('FOR u IN users SORT u.name ASC RETURN u')->explain();
     ok $plan && ref($plan) eq 'ARRAY';
     like exception { $db->query('FOR u IN users SORT u.name ASC RETURN ')->explain(); }, qr/^Failed to explain query/;
+};
+
+subtest 'cursor' => sub {
+    my $db   = ArangoDB->new($config);
+    my $conn = $db->{connection};
+    my $cur  = ArangoDB::Cursor->new( $conn, {} );
+    isa_ok $cur, 'ArangoDB::Cursor';
+
+    $cur = ArangoDB::Cursor->new( $conn, { result => {} } );
+    ok $cur;
+
+    $cur = ArangoDB::Cursor->new(
+        $conn,
+        {   result => [
+                {   _id    => '0/0',
+                    '_rev' => 0,
+                    foo    => [
+                        { bar => 1 }, [1], 42, undef, \do { my $var = 1 }
+                    ]
+                },
+                undef,
+            ]
+        }
+    );
+    my $doc = $cur->next;
+    isa_ok $doc, 'ArangoDB::Document';
+    $cur->next;
+
+    pass();
 };
 
 done_testing;

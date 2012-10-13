@@ -1,16 +1,9 @@
 package ArangoDB::Edge;
 use strict;
 use warnings;
+use Carp qw(croak);
 use parent 'ArangoDB::Document';
-
-sub new {
-    my ($class, $raw_edge) = @_;
-    my $self = $class->SUPER::new($raw_edge);
-    $self->{_from} = delete $self->{document}{_from};
-    $self->{_to} = delete $self->{document}{_to};
-    $self = bless $self, $class;
-    return $self;
-}
+use ArangoDB::Constants qw(:api);
 
 sub from {
     return $_[0]->{_from};
@@ -20,6 +13,21 @@ sub to {
     return $_[0]->{_to};
 }
 
+sub _api_path {
+    my $self = shift;
+    return API_EDGE . '/' . $self;
+}
+
+# Handling server error
+sub _server_error_handler {
+    my ( $self, $error, $action ) = @_;
+    my $msg = sprintf( 'Failed to %s the edge(%s)', $action, $self );
+    if ( ref($error) && $error->isa('ArangoDB::ServerException') ) {
+        $msg .= ':' . ( $error->detail->{errorMessage} || q{} );
+    }
+    croak $msg;
+}
+
 1;
 __END__
 
@@ -27,7 +35,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Edge - 
+ArangoDB::Edge - An ArangoDB edge
 
 =head1 DESCRIPTION
 
@@ -35,9 +43,45 @@ Instance of ArangoDB edge.
 
 =head1 METHODS
 
-=head2 new()
+=head2 new($raw_edge)
 
 Constructor.
+
+=head2 id()
+
+Returns identifer of the edge.
+
+=head2 revision()
+
+Returns revision of the edge.
+
+=head2 collection_id()
+
+Returns collection identifier of the edge.
+
+=head2 content()
+
+Returns content of the edge.
+
+=head2 get($attr_name)
+
+Get the value of an attribute of the edge.
+
+=head2 set($attr_name,$value)
+
+Update the value of an attribute (Does not write to database)
+
+=head2 fetch()
+
+Fetch the edge data from database.
+
+=head2 save()
+
+Save the changes of edge to database.
+
+=head2 delete()
+
+Delete the edge from database.
 
 =head2 from()
 
@@ -47,16 +91,8 @@ Returns document id that start of the edge.
 
 Returns document id that end of the edge.
 
-=head2 id()
+=head1 AUTHOR
 
-Returns id of the document.
-
-=head2 revision()
-
-Returns revision of the document.
-
-=head2 content()
-
-Returns content of the document.
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

@@ -12,19 +12,19 @@ use Class::Accessor::Lite ( ro => [qw/options/] );
 sub new {
     my ( $class, $options ) = @_;
     my $self = bless {}, $class;
-    $self->{options} = ArangoDB::ConnectOptions->new($options);
+    my $opts = ArangoDB::ConnectOptions->new($options);
     my $furl = Furl->new(
-        timeout => $self->{options}->timeout,
-        headers => [ 'Connection' => $self->{options}->keep_alive ? 'Keep-Alive' : 'Close', ],
-        proxy   => $self->options->proxy,
+        timeout => $opts->timeout,
+        headers => [ 'Connection' => $opts->keep_alive ? 'Keep-Alive' : 'Close', ],
+        proxy   => $opts->proxy,
     );
     $self->{_http_agent} = $furl;
-    my $api_str = 'http://' . $self->{options}->host;
-    if ( my $port = $self->{options}->port ) {
-        $api_str .= ':' . $port;
+    $self->{api_str}     = 'http://' . $opts->host . ':' . $opts->port;
+    if ( $opts->auth_type && $opts->auth_user ) {
+        $self->{auth_info}
+            = sprintf( '%s %s', $opts->auth_type, encode_base64( $opts->auth_user . ':' . $opts->auth_passwd ) );
     }
-    $self->{api_str} = $api_str;
-
+    $self->{options} = $opts;
     return $self;
 }
 
@@ -82,9 +82,8 @@ sub _build_headers {
         push @headers, 'Content-Type' => 'application/json';
     }
 
-    if ( $options->auth_type && $options->auth_user ) {
-        my $auth_value = encode_base64( $options->auth_user . ':' . $options->auth_passwd );
-        push @headers, Authorization => sprintf( '%s %s', $options->auth_type, $auth_value );
+    if ( exists $self->{auth_info} ) {
+        push @headers, Authorization => $self->{auth_info};
     }
 
     return \@headers;
@@ -114,7 +113,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Connection -
+ArangoDB::Connection - A connection to a ArangoDB server.
 
 =head1 DESCRIPTION
 
@@ -130,6 +129,10 @@ It is arguments of L<ArangoDB::ConnectOptions>.
 
 =back
 
+=head2 options
+
+Returns instance of L<ArangoDB::ConnectOptions>.
+
 =head2 http_get($path)
 
 Send GET HTTP request to $path.
@@ -144,7 +147,7 @@ $data is encoded to JSON.
 Send POST HTTP request to $path with $raw_data.
 $raw_data isn't encoded to JSON.
 
-=haed2 http_put($path,$data)
+=head2 http_put($path,$data)
 
 Send PUT HTTP request to $path with $data.
 $data is encoded to JSON.
@@ -152,5 +155,9 @@ $data is encoded to JSON.
 =head2 http_delete($path)
 
 Send DELETE HTTP request to $path.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

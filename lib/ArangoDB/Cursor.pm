@@ -17,8 +17,6 @@ BEGIN {
             my $orig = shift;
             return unless defined $orig;
             my $reftype = ref $orig;
-            return $orig unless defined $reftype;
-
             if ( $reftype eq 'ARRAY' ) {
                 return [ map { !ref($_) ? $_ : _clone($_) } @$orig ];
             }
@@ -51,7 +49,7 @@ sub new {
 sub next {
     my $self = shift;
     if ( $self->{position} < $self->{length} || $self->_get_next_batch() ) {
-        return ArangoDB::Document->new( _clone( $self->{result}->[ $self->{position}++ ] ) );
+        return ArangoDB::Document->new( $self->{connection}, _clone( $self->{result}->[ $self->{position}++ ] ) );
     }
     return;
 }
@@ -99,7 +97,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Cursor -
+ArangoDB::Cursor - An ArangoDB cursor
 
 =head1 DESCRIPTION
 
@@ -118,5 +116,9 @@ Returns next document(Instance of L<ArangoDB::Document>).
 =head2 delete()
 
 Delete cursor.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

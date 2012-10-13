@@ -1,6 +1,7 @@
 use inc::Module::Install;
 name 'ArangoDB';
 all_from 'lib/ArangoDB.pm';
+readme_pod_from 'lib/ArangoDB.pm';
 
 requires 'parent';
 requires 'Class::Accessor::Lite';

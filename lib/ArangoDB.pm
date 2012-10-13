@@ -4,8 +4,15 @@ use warnings;
 use Carp qw(croak);
 use ArangoDB::Connection;
 use ArangoDB::Collection;
+use ArangoDB::Document;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
+
+use overload '&{}' => sub {
+    my $self = shift;
+    return sub { $self->collection( $_[0] ) };
+    },
+    fallback => 1;
 
 our $VERSION = '0.01_02';
 $VERSION = eval $VERSION;
@@ -61,23 +68,6 @@ sub collections {
     return \@colls;
 }
 
-sub drop {
-    my ( $self, $name ) = @_;
-    my $api = API_COLLECTION . '/' . $name;
-    eval { $self->{connection}->http_delete($api); };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to drop collection($name)", 1 );
-    }
-}
-
-sub truncate {
-    my ( $self, $name ) = @_;
-    my $coll = $self->collection($name);
-    if ($coll) {
-        $coll->truncate;
-    }
-}
-
 sub query {
     my ( $self, $query ) = @_;
     return ArangoDB::Statement->new( $self->{connection}, $query );
@@ -90,19 +80,6 @@ sub _server_error_handler {
         $message .= ':' . ( $error->detail->{errorMessage} || q{} );
     }
     croak $message;
-}
-
-sub AUTOLOAD {
-    my $self = shift;
-    my $name = our $AUTOLOAD;
-    $name =~ s/.*:://o;
-    return if $name eq 'DESTROY';
-    return $self->collection($name);
-}
-
-BEGIN {
-    *get_index  = \&ArangoDB::Collection::get_index;
-    *drop_index = \&ArangoDB::Collection::drop_index;
 }
 
 1;
@@ -175,6 +152,16 @@ Default: 8529
 
 Seconds of HTTP connection timeout.
 
+=item keep_alive
+
+If it is true, use HTTP Keep-Alive connection.
+Default: false
+
+=item auth_type
+
+Authentication method.
+Supporting "Basic" only.
+
 =item auth_user
 
 User name for authentication
@@ -183,19 +170,9 @@ User name for authentication
 
 Password for authentication
 
-=item auth_type
-
-Authentication method.
-Supporting "Basic" only.
-
-=item keep_alive
-
-If it is true, use HTTP Keep-Alive connection.
-Default: false
-
 =item proxy
 
-HTTP proxy.
+Proxy url for HTTP connection.
 
 =back
 
@@ -219,24 +196,6 @@ If the Collection $name does not exist, Create it.
 
 Get all collections.
 Returns ARRAY reference.
-
-=head2 drop($name)
-
-Drop collection.
-Same as `$db->collection($name)->drop();`.
-
-=head2 truncate($name)
-
-Truncate a collection.
-Same as `$db->collection($name)->truncate();`.
-
-=head2 get_index($index_id)
-
-Returns instance of ArangoDB::Index::*.
-
-=head2 drop_index($index_id)
-
-Drop a index.
 
 =head2 query($query)
 

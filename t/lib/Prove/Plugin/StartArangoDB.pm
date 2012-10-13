@@ -21,7 +21,12 @@ sub load {
             my $port = shift;
             diag "Starting arangod on 127.0.0.1:$port";
             my $dir = $TMP_DIR->dirname;
-            exec "arangod --server.http-port $port $dir";
+            eval{
+                exec "arangod --server.http-port $port $dir";
+            };
+            if( $@ ) {
+                diag $@;
+            }
         }
     );
     

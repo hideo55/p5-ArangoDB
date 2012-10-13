@@ -2,6 +2,7 @@ use strict;
 use Test::More;
 use Test::Fatal qw(lives_ok dies_ok exception);
 use Test::Mock::Guard;
+use Test::Deep;
 use ArangoDB;
 use JSON;
 
@@ -33,11 +34,13 @@ subtest 'create document' => sub {
     my $coll = $db->create('foo');
     my $doc1 = $coll->save( { foo => 'bar', baz => 10 } );
     isa_ok $doc1, 'ArangoDB::Document';
-    is "$doc1", $doc1->id, 'Test for ArangoDB::Document overload';
+    is "$doc1", $doc1->document_handle, 'Test for ArangoDB::Document overload';
     ok defined $doc1->revision;
+    is $doc1->document_handle, $doc1->collection_id . '/' . $doc1->id;
     is_deeply $doc1->content, { foo => 'bar', baz => 10 };
+    is $doc1->get('foo'), 'bar';
 
-    my $doc2 = $coll->document( $doc1->id );
+    my $doc2 = $coll->document($doc1);
     is_deeply $doc1, $doc2;
 
     my $e = exception {
@@ -57,18 +60,14 @@ subtest 'Delete document' => sub {
     my $coll = $db->collection('foo');
     my $doc  = $coll->save( { foo => 'bar' } );
     ok $doc;
-    $coll->delete($doc);
+    $coll->document($doc)->delete();
     like exception { $coll->document($doc) }, qr/^Failed to get the document/;
 
     my $e = exception {
-        my $guard = mock_guard(
-            'ArangoDB::Connection' => {
-                http_delete => sub {die}
-            }
-        );
-        $coll->delete($doc);
+        $doc->delete();
     };
     like $e, qr/^Failed to delete the document/;
+
 };
 
 subtest 'Update document' => sub {
@@ -76,20 +75,33 @@ subtest 'Update document' => sub {
     my $coll = $db->collection('foo');
     my $doc1 = $coll->save( { foo => 'bar' } );
     is_deeply $doc1->content, { foo => 'bar' };
-    my $doc2 = $coll->update( $doc1, { foo => 'baz' } );
-    is $doc1, $doc2;
-    ok $doc1->revision < $doc2->revision;
-    is_deeply $doc2->content, { foo => 'baz' };
+    my $doc2 = $coll->document($doc1);
+    $doc1->set( foo => 'baz' );
+    $doc1->save();
+    is $doc1->id, $doc2->id;
+    ok $doc1->revision > $doc2->revision;
+    ok !eq_deeply( $doc1->content, $doc2->content );
+    $doc2->fetch;
+    is_deeply $doc2->content, $doc1->content;
 
-    my $e = exception {
+    like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
                 http_put => sub {die}
             }
         );
-        $coll->update( $doc1, { foo => 'bar' } );
-    };
-    like $e, qr/^Failed to update the document/;
+        $doc1->set( foo => 'bar' );
+        $doc1->save();
+    }, qr/^Failed to update the document/;
+
+    like exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_get => sub {die}
+            }
+        );
+        $doc1->fetch;
+    }, qr/^Failed to fetch the document/;
 
 };
 
@@ -100,7 +112,7 @@ subtest 'bulk import - header' => sub {
     ok !$res->{failed};
     is $res->{created}, 2;
 
-    my $e = exception {
+    like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
                 http_post_raw => sub {die}
@@ -108,9 +120,7 @@ subtest 'bulk import - header' => sub {
         );
         $db->collection('di')->bulk_import( [qw/fistsName lastName age gender/],
             [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
-    };
-
-    like $e, qr/^Failed to bulk import to the collection/;
+    }, qr/^Failed to bulk import to the collection/;
 
 };
 
@@ -121,7 +131,7 @@ subtest 'bulk import - self-contained' => sub {
     ok !$res->{failed};
     is $res->{created}, 2;
 
-    my $e = exception {
+    like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
                 http_post_raw => sub {die}
@@ -129,22 +139,7 @@ subtest 'bulk import - self-contained' => sub {
         );
         $db->collection('di')
             ->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
-    };
-
-    like $e, qr/^Failed to bulk import to the collection/;
-};
-
-subtest 'get all document id' => sub {
-    my $db      = ArangoDB->new($config);
-    my $coll = $db->collection('di');
-    my $doc_ids = $coll->all_document_ids;
-    is scalar @$doc_ids, 4;
-    
-    my $e = exception {
-        my $guard = mock_guard( 'ArangoDB::Connection' => { http_get => sub {die} } );
-        $coll->all_document_ids;
-    };
-    like $e, qr/^Failed to get the all document ids/;
+    }, qr/^Failed to bulk import to the collection/;
 };
 
 done_testing;

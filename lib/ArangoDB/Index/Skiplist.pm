@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::Skiplit - 
+ArangoDB::Index::Skiplit - An ArangoDB Skip-List Index
 
 =head1 DESCRIPTION
 
@@ -43,5 +43,9 @@ List of attribute paths.
 =head2 unique()
 
 If it is true, it is a unique index.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

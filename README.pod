@@ -65,6 +65,16 @@ Default: 8529
 
 Seconds of HTTP connection timeout.
 
+=item keep_alive
+
+If it is true, use HTTP Keep-Alive connection.
+Default: false
+
+=item auth_type
+
+Authentication method.
+Supporting "Basic" only.
+
 =item auth_user
 
 User name for authentication
@@ -73,19 +83,9 @@ User name for authentication
 
 Password for authentication
 
-=item auth_type
-
-Authentication method.
-Supporting "Basic" only.
-
-=item keep_alive
-
-If it is true, use HTTP Keep-Alive connection.
-Default: false
-
 =item proxy
 
-HTTP proxy.
+Proxy url for HTTP connection.
 
 =back
 
@@ -109,24 +109,6 @@ If the Collection $name does not exist, Create it.
 
 Get all collections.
 Returns ARRAY reference.
-
-=head2 drop($name)
-
-Drop collection.
-Same as `$db->collection($name)->drop();`.
-
-=head2 truncate($name)
-
-Truncate a collection.
-Same as `$db->collection($name)->truncate();`.
-
-=head2 get_index($index_id)
-
-Returns instance of ArangoDB::Index::*.
-
-=head2 drop_index($index_id)
-
-Drop a index.
 
 =head2 query($query)
 

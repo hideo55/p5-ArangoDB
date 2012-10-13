@@ -16,7 +16,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index::CapConstraint - 
+ArangoDB::Index::CapConstraint - An ArangoDB Cap Constraint
 
 =head1 DESCRIPTION
 
@@ -39,5 +39,9 @@ Index type.
 =head2 size()
 
 Restriction size of collection.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

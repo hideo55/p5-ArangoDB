@@ -1,0 +1,95 @@
+package ArangoDB::AbstractDocument;
+use strict;
+use warnings;
+
+use overload
+    q{""}    => sub { shift->document_handle },
+    fallback => 1;
+
+sub new {
+    my ( $class, $conn, $doc ) = @_;
+    my $self = bless {}, $class;
+    $self->{connection} = $conn;
+    my $id  = CORE::delete $doc->{_id};
+    my $rev = CORE::delete $doc->{_rev};
+    $self->{is_persistent} = defined $id && defined $rev;
+    if ( $self->{is_persistent} ) {
+        ( $self->{_collection_id}, $self->{_id} ) = split '/', $id;
+        $self->{_document_handle} = $id;
+        $self->{_rev}             = $rev;
+    }
+    map { $self->{$_} = CORE::delete $doc->{$_} } grep {/^_/} keys %$doc;
+    $self->{document} = $doc;
+    return $self;
+}
+
+sub id {
+    $_[0]->{_id};
+}
+
+sub revision {
+    $_[0]->{_rev};
+}
+
+sub collection_id {
+    $_[0]->{_collection_id};
+}
+
+sub document_handle {
+    $_[0]->{_document_handle};
+}
+
+sub content {
+    return $_[0]->{document};
+}
+
+sub get {
+    my ( $self, $attr_name ) = @_;
+    return $self->{document}{$attr_name};
+}
+
+sub set {
+    my ( $self, $attr_name, $value ) = @_;
+    $self->{document}{$attr_name} = $value;
+}
+
+sub fetch {
+    my $self = shift;
+    my $res = eval { $self->{connection}->http_get( $self->_api_path ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'fetch' );
+    }
+    $self->{_rev} = delete $res->{_rev};
+    $self->{document} = { map { $_ => $res->{$_} } grep { $_ !~ /^_/ } keys %$res };
+    return $self;
+}
+
+sub save {
+    my $self = shift;
+    eval { $self->{connection}->http_put( $self->_api_path, $self->content ); };
+    if ($@) {
+        $self->_server_error_handler( $@, 'update' );
+    }
+    $self->fetch();
+    return $self;
+}
+
+sub delete {
+    my $self = shift;
+    my $res = eval { $self->{connection}->http_delete( $self->_api_path ) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'delete' );
+    }
+    return $self;
+}
+
+sub _api_path {
+    die 'Abstract method';
+}
+
+sub _server_error_handler {
+    die 'Abstract method';
+}
+
+1;
+__END__

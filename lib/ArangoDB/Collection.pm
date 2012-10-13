@@ -23,7 +23,7 @@ use overload
 
 =head1 NAME
 
-ArangoDB::Collection - 
+ArangoDB::Collection - An ArangoDB collection
 
 =head1 DESCRIPTION
 
@@ -182,7 +182,7 @@ The number of living documents.
 
 =item alive-size
 
- The total size in bytes used by all living documents.
+The total size in bytes used by all living documents.
 
 =item dead-count
 
@@ -322,40 +322,21 @@ sub unload {
 
 =pod
 
-=head2 document($doc_id)
+=head2 document($doc)
 
-Get documnet in the collection.
+Get documnet in the collection based on $doc.
 
 =cut
 
 sub document {
-    my ( $self, $doc_id ) = @_;
-    $doc_id = defined $doc_id ? $doc_id : q{};
-    my $api = API_DOCUMENT . '/' . $doc_id;
+    my ( $self, $doc ) = @_;
+    $doc = $doc || q{};
+    my $api = API_DOCUMENT . '/' . $doc;
     my $res = eval { $self->{connection}->http_get($api) };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to get the document($doc_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to get the document($doc) in the collection(%s)" );
     }
-    return ArangoDB::Document->new($res);
-}
-
-=pod 
-
-=head2 all_document_ids()
-
-Returns list of document id in the collection.
-
-=cut
-
-sub all_document_ids {
-    my $self = shift;
-    my $api  = API_DOCUMENT . '?collection=' . $self->{id};
-    my $res  = eval { $self->{connection}->http_get($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to get the all document ids in the collection(%s)" );
-    }
-    my @doc_ids = map {m|^/_api/document/(.+)$|} @{ $res->{documents} };
-    return \@doc_ids;
+    return ArangoDB::Document->new( $self->{connection}, $res );
 }
 
 =pod
@@ -371,7 +352,7 @@ sub save {
     my $api = API_DOCUMENT . '?collection=' . $self->{id};
     my $doc = eval {
         my $res = $self->{connection}->http_post( $api, $data );
-        $self->document( $res->{_id} );
+        ArangoDB::Document->new( $self->{connection}, $res )->fetch;
     };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to save the new document to the collection(%s)' );
@@ -438,99 +419,21 @@ sub bulk_import_self_contained {
 
 =pod
 
-=head2 update($doc_id,$data)
-
-Update document in the collection.
-
-=cut
-
-sub update {
-    my ( $self, $doc_id, $data ) = @_;
-    $doc_id = defined $doc_id ? $doc_id : q{};
-    my $api = API_DOCUMENT . '/' . $doc_id;
-    eval { $self->{connection}->http_put( $api, $data ); };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to update the document($doc_id) in the collection(%s)" );
-    }
-    return $self->document($doc_id);
-}
-
-=pod
-
-=head2 delete($doc_id)
-
-Delete document in the collection.
-
-=cut
-
-sub delete {
-    my ( $self, $doc_id ) = @_;
-    $doc_id = defined $doc_id ? $doc_id : q{};
-    my $api = API_DOCUMENT . '/' . $doc_id;
-    my $res = eval { $self->{connection}->http_delete($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to delete the document($doc_id) in the collection(%s)" );
-    }
-    return;
-}
-
-=pod
-
-=head2 any_edges($vertex)
-
-Returns the list of edges starting or ending in the vertex identified by $vertex.
-
-
-=cut
-
-sub any_edges {
-    my ( $self, $vertex ) = @_;
-    return $self->_get_edges( $vertex, 'any' );
-}
-
-=pod
-
-=head2 in_edges($vertex)
-
-Returns the list of edges ending in the vertex identified by $vertex.
-
-=cut
-
-sub in_edges {
-    my ( $self, $vertex ) = @_;
-    return $self->_get_edges( $vertex, 'in' );
-}
-
-=pod
-
-=head2 out_edges($vertex)
-
-Returns the list of edges starting in the vertex identified by $vertex.
-
-=cut
-
-sub out_edges {
-    my ( $self, $vertex ) = @_;
-    return $self->_get_edges( $vertex, 'out' );
-}
-
-=pod
-
-=head2 edge($edge_id)
+=head2 edge($edge)
 
 Get edge in the collection.
 
 =cut
 
 sub edge {
-    my ( $self, $edge_id ) = @_;
-    $edge_id = defined $edge_id ? $edge_id : q{};
-    my $api = API_EDGE . '/' . $edge_id;
+    my ( $self, $edge ) = @_;
+    $edge = $edge || q{};
+    my $api = API_EDGE . '/' . $edge;
     my $res = eval { $self->{connection}->http_get($api) };
     if ($@) {
-        $self->_server_error_handler( $@, "Failed to get the edge($edge_id) in the collection(%s)" );
+        $self->_server_error_handler( $@, "Failed to get the edge($edge) in the collection(%s)" );
     }
-    return ArangoDB::Edge->new($res);
+    return ArangoDB::Edge->new( $self->{connection}, $res );
 }
 
 =pod
@@ -543,50 +446,15 @@ Save edge to the collection.
 
 sub save_edge {
     my ( $self, $from, $to, $data ) = @_;
-    my $api = API_EDGE . '?collection=' . $self->{id} . '&from=' . $from . '&to=' . $to;
-    my $res = eval { $self->{connection}->http_post( $api, $data ) };
+    my $api  = API_EDGE . '?collection=' . $self->{id} . '&from=' . $from . '&to=' . $to;
+    my $edge = eval {
+        my $res = $self->{connection}->http_post( $api, $data );
+        $self->edge($res->{_id});
+    };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to save the new edge to the collection(%s)" );
     }
-    return $self->edge( $res->{_id} );
-}
-
-=pod
-
-=head2 update_edge($edge_id,$data)
-
-Update edge in the collection.
-
-=cut
-
-sub update_edge {
-    my ( $self, $edge_id, $data ) = @_;
-    $edge_id = defined $edge_id ? $edge_id : q{};
-    my $api = API_EDGE . '/' . $edge_id;
-    eval { $self->{connection}->http_put( $api, $data ) };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to update the edge($edge_id) in the collection(%s)" );
-    }
-    return $self->edge($edge_id);
-}
-
-=pod
-
-=head2 delete_edge($edge_id)
-
-Remoce edge in the collection.
-
-=cut
-
-sub delete_edge {
-    my ( $self, $edge_id ) = @_;
-    $edge_id = defined $edge_id ? $edge_id : q{};
-    my $api = API_EDGE . '/' . $edge_id;
-    my $res = eval { $self->{connection}->http_delete($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to delete the edge($edge_id) in the collection(%s)" );
-    }
-    return;
+    return $edge;
 }
 
 =pod
@@ -615,7 +483,7 @@ The documents to skip in the query. (optional)
 sub all {
     my ( $self, $options ) = @_;
     $options ||= {};
-    my $data = { collection => $self->{name} };
+    my $data = { collection => $self->{id} };
     for my $key ( grep { exists $options->{$_} } qw{limit skip} ) {
         $data->{$key} = $options->{$key};
     }
@@ -653,7 +521,7 @@ The documents to skip in the query. (optional)
 sub by_example {
     my ( $self, $example, $options ) = @_;
     $options ||= {};
-    my $data = { collection => $self->{name}, example => $example };
+    my $data = { collection => $self->{id}, example => $example };
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit skip);
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_EXAMPLE, $data ) };
     if ($@) {
@@ -675,12 +543,12 @@ $example is the exmaple.
 
 sub first_example {
     my ( $self, $example ) = @_;
-    my $data = { collection => $self->{name}, example => $example };
+    my $data = { collection => $self->{id}, example => $example };
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_FIRST, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
     }
-    return ArangoDB::Document->new( $res->{document} );
+    return ArangoDB::Document->new( $self->{connection}, $res->{document} );
 }
 
 =pod
@@ -718,7 +586,7 @@ The documents to skip in the query. (optional)
 sub range {
     my ( $self, $attr, $lower, $upper, $options ) = @_;
     $options ||= {};
-    my $data = { collection => $self->{name}, attribute => $attr, left => $lower, right => $upper, };
+    my $data = { collection => $self->{id}, attribute => $attr, left => $lower, right => $upper, };
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(closed limit skip);
     if ( exists $data->{closed} ) {
         $data->{closed} = $data->{closed} ? JSON::true : JSON::false;
@@ -767,7 +635,7 @@ If given, the identifier of the geo-index to use. (optional)
 sub near {
     my ( $self, $latitude, $longitude, $options ) = @_;
     $options ||= {};
-    my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, };
+    my $data = { collection => $self->{id}, latitude => $latitude, longitude => $longitude, };
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(distance limit skip geo);
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_NEAR, $data ) };
     if ($@) {
@@ -812,7 +680,7 @@ If given, the identifier of the geo-index to use. (optional)
 sub within {
     my ( $self, $latitude, $longitude, $radius, $options ) = @_;
     $options ||= {};
-    my $data = { collection => $self->{name}, latitude => $latitude, longitude => $longitude, radius => $radius, };
+    my $data = { collection => $self->{id}, latitude => $latitude, longitude => $longitude, radius => $radius, };
     map { $data->{$_} = $options->{$_} }
         grep { exists $options->{$_} } qw(distance limit skip geo);
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_WITHIN, $data ) };
@@ -1058,18 +926,6 @@ sub _put_to_this {
         $self->_server_error_handler( $@, "Failed to update the property($path) of the collection(%s)" );
     }
     return $res;
-}
-
-sub _get_edges {
-    my ( $self, $vertex, $direction ) = @_;
-    my $api = API_EDGES . '/' . $self->{id} . '?vertex=' . $vertex . '&direction=' . $direction;
-    my $res = eval { $self->{connection}->http_get($api) };
-    if ($@) {
-        $self->_server_error_handler( $@,
-            'Failed to get edges(' . join( ',', $self->{id}, $vertex, $direction ) . ') in the collection(%s)' );
-    }
-    my @edges = map { ArangoDB::Edge->new($_) } @{ $res->{edges} };
-    return \@edges;
 }
 
 # get instance of index

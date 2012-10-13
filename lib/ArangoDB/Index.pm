@@ -13,11 +13,11 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Index -
+ArangoDB::Index - Base class of ArangoDB indexes
 
 =head1 DESCRIPTION
 
-Base class of ArangoDB index.
+Base class of ArangoDB indexes.
 
 =head1 METHODS
 
@@ -29,12 +29,12 @@ Constructor.
 
 Returns identifier of index.
 
-=head2 fields()
-
-Returns list of fields.
-
 =head2 type()
 
 Returns type of index.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

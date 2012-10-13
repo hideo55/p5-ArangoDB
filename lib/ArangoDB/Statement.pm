@@ -1,18 +1,15 @@
 package ArangoDB::Statement;
 use strict;
 use warnings;
-use overload
-    q{""} => sub { $_[0]->{query} },
-    '&{}' => sub {
-    my ( $self, $options ) = @_;
-    return sub { $self->execute($options) }
-    },
-    fallback => 1;
 use Carp qw(croak);
 use JSON ();
 use ArangoDB::Cursor;
 use ArangoDB::BindVars;
 use ArangoDB::Constants qw(:api);
+
+use overload
+    q{""}    => sub { $_[0]->{query} },
+    fallback => 1;
 
 sub new {
     my ( $class, $conn, $query ) = @_;
@@ -110,7 +107,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Statementi -
+ArangoDB::Statement - ArangoDB AQL handler
 
 =head1 SYNOPSIS
 
@@ -121,14 +118,14 @@ ArangoDB::Statementi -
         port => 8529,
     });
   
-    my $sth = $db->query('FOR u IN users FILTER u.active == true');
+    my $sth = $db->query('FOR u IN users FILTER u.active == true RETURN u');
     my $cur = $sth->execute();
     while( my $doc = $cur->next() ){
         # do something
     }
   
     # Use bind variable
-    $sth = $db->query('FOR u IN users FILTER u.age >= @age');
+    $sth = $db->query('FOR u IN users FILTER u.age >= @age SORT u.name ASC RETURN u');
     $sth->bind( age => 18 );
     $cur = $sth->execute();
     while( my $doc = $cur->next() ){
@@ -188,8 +185,14 @@ If $name does not passed, returns all bind variables as HASH reference.
 Set bind variable(s).
 $vars is HASH reference that set of key/value pairs.
 
-=head2 validate_query()
+Returns instance of L<ArangoDB::Statement>.You can use method chain:
 
-Validate a query string without executing
+    my $cursor = $db->query(
+        'FOR u IN users FILTER u.age >= @age SORT u.name ASC RETURN u'
+    )->bind( age => 19 )->execute();
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut

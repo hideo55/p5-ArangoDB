@@ -68,7 +68,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::BindVars - 
+ArangoDB::BindVars - An ArangoDB AQL bind variables
 
 =head1 DESCRIPTION
 
@@ -93,5 +93,9 @@ Returns bind variable.
 
 Set bind variable(s).
 $vars is HASH reference that set of key/value pairs.
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut
