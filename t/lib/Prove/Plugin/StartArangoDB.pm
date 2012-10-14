@@ -9,33 +9,33 @@ our $ARANGODB;
 our $TMP_DIR;
 
 sub load {
-    if( my $arangodb_port = $ENV{TEST_ARANGODB_PORT} ){
+    if ( my $arangodb_port = $ENV{TEST_ARANGODB_PORT} ) {
         diag 'TEST_ARANGODB_PORT explicitly set. Not starting ArangoDB.';
         return;
     }
-    
+
     $TMP_DIR = File::Temp->newdir;
-    
-    $ARANGODB = Test::TCP->new(
-        code => sub {
-            my $port = shift;
-            diag "Starting arangod on 127.0.0.1:$port";
-            my $dir = $TMP_DIR->dirname;
-            eval{
+
+    eval {
+        $ARANGODB = Test::TCP->new(
+            code => sub {
+                my $port = shift;
+                diag "Starting arangod on 127.0.0.1:$port";
+                my $dir = $TMP_DIR->dirname;
                 exec "arangod --server.http-port $port $dir";
-            };
-            if( $@ ) {
-                diag $@;
             }
-        }
-    );
-    
-    $ENV{TEST_ARANGODB_PORT} = $ARANGODB->port;
+        );
+
+        $ENV{TEST_ARANGODB_PORT} = $ARANGODB->port;
+    };
+    if ($@) {
+        diag $@;
+    }
 }
 
-END{
+END {
     undef $ARANGODB;
-    undef $TMP_DIR; 
+    undef $TMP_DIR;
 }
 
 1;
