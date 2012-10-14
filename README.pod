@@ -54,12 +54,14 @@ $options is HASH reference.The attributes of $options are:
 
 =item host
 
-Hostname or IP address of ArangoDB server.
+Hostname or IP address of ArangoDB server. 
+
 Default: localhost
 
 =item port
 
 Port number of ArangoDB server.
+
 Default: 8529
 
 =item timeout
@@ -69,12 +71,12 @@ Seconds of HTTP connection timeout.
 =item keep_alive
 
 If it is true, use HTTP Keep-Alive connection.
+
 Default: false
 
 =item auth_type
 
-Authentication method.
-Supporting "Basic" only.
+Authentication method. Supporting "Basic" only.
 
 =item auth_user
 
@@ -97,21 +99,22 @@ Create new collection. Returns instance of L<ArangoDB::Collection>.
 =head2 find($name)
 
 Get a Collection based on $name. Returns instance of L<ArangoDB::Collection>.
+
 If the collection does not exist, returns C<undef>. 
 
 =head2 collection($name)
 
 Get or create a Collection based on $name.
+
 If the Collection $name does not exist, Create it.
 
 =head2 collections()
 
-Get all collections.
-Returns ARRAY reference.
+Get all collections. Returns ARRAY reference.
 
 =head2 query($query)
 
-Returns instance of L<ArangoDB::Statement>.
+Get AQL statement handler. Returns instance of L<ArangoDB::Statement>.
 
 =head1 AUTHOR
 
