@@ -54,7 +54,7 @@ Base class of ArangoDB indexes.
 
 =head1 METHODS
 
-=head2 new()
+=head2 new($raw_index)
 
 Constructor.
 

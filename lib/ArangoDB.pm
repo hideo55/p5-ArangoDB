@@ -42,11 +42,14 @@ sub create {
 sub find {
     my ( $self, $name ) = @_;
     my $api = API_COLLECTION . '/' . $name;
-    my $res = eval { $self->{connection}->http_get($api); };
+    my $collection = eval { 
+        my $res = $self->{connection}->http_get($api);
+        ArangoDB::Collection->new( $self->{connection}, $res );
+    };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to get collection: $name", 1 );
     }
-    return $res ? ArangoDB::Collection->new( $self->{connection}, $res ) : undef;
+    return $collection;
 }
 
 sub collection {

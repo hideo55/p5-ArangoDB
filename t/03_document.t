@@ -122,6 +122,22 @@ subtest 'bulk import - header' => sub {
             [ [ "Joe", "Public", 42, "male" ], [ "Jane", "Doe", 31, "female" ], ] );
     }, qr/^Failed to bulk import to the collection/;
 
+    like exception {
+        $db->collection('di')->bulk_import({});
+    }, qr/^1st parameter must be ARRAY reference/;
+    
+    like exception {
+        $db->collection('di')->bulk_import();
+    }, qr/^1st parameter must be ARRAY reference/;
+    
+    like exception {
+        $db->collection('di')->bulk_import([]);
+    }, qr/^2nd parameter must be ARRAY reference/;
+    
+    like exception {
+        $db->collection('di')->bulk_import([],{});
+    }, qr/^2nd parameter must be ARRAY reference/;
+
 };
 
 subtest 'bulk import - self-contained' => sub {
@@ -140,6 +156,14 @@ subtest 'bulk import - self-contained' => sub {
         $db->collection('di')
             ->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
     }, qr/^Failed to bulk import to the collection/;
+    
+    like exception {
+        $db->collection('di')->bulk_import_self_contained();
+    }, qr/^Parameter must be ARRAY reference/;
+
+    like exception {
+        $db->collection('di')->bulk_import_self_contained({});
+    }, qr/^Parameter must be ARRAY reference/;
 };
 
 done_testing;

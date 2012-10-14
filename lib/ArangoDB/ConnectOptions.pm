@@ -26,13 +26,13 @@ sub _validate {
     my $self    = shift;
     my $options = $self->{_options};
     die "host should be a string"
-        if !is_string( $options->{host} );
+        if !defined $options->{host} || !is_string( $options->{host} );
     die "port should be an integer"
-        if $options->{port}
-            && !is_integer( $options->{port} );
+        if !defined $options->{port}
+            || !is_integer( $options->{port} );
 
     die "timeout should be an integer"
-        if $options->{timeout}
+        if defined $options->{timeout}
             && !is_integer( $options->{timeout} );
 
     if ( $options->{auth_type} && none { $options->{auth_type} eq $_ } @supported_auth_type ) {

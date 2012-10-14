@@ -47,8 +47,24 @@ like exception {
 
 like exception {
     ArangoDB->new(
+        {   host => undef,
+            port => 8529,
+        }
+    );
+}, qr/^host should be a string/;
+
+like exception {
+    ArangoDB->new(
         {   host => 'localhost',
             port => 'foo',
+        }
+    );
+}, qr/^port should be an integer/;
+
+like exception {
+    ArangoDB->new(
+        {   host => 'localhost',
+            port => undef,
         }
     );
 }, qr/^port should be an integer/;
@@ -68,6 +84,14 @@ like exception {
         }
     );
 }, qr/^timeout should be an integer/;
+
+lives_ok {
+    ArangoDB->new(
+        {   host    => 'localhost',
+            timeout => undef,
+        }
+    );
+};
 
 like exception {
     ArangoDB->new(

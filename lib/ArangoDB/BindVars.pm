@@ -44,13 +44,9 @@ sub count {
     use Data::Util qw(:check);
     use ArangoDB::ClientException;
 
-    sub is_bool {
-        !defined( $_[0] ) || $_[0] eq "" || "$_[0]" eq '1' || "$_[0]" eq '0';
-    }
-
     sub validate {
         my $val = shift;
-        return if is_string($val) || is_integer($val) || is_number($val) || is_bool($val);
+        return if !defined($val) || is_string($val) || $val eq q{};
         if ( is_array_ref($val) ) {
             for my $v (@$val) {
                 validate($v);

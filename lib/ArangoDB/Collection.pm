@@ -227,7 +227,10 @@ sub figure {
         return $res->{count}       if $type eq 'count';
         return $res->{journalSize} if $type eq 'journalSize';
         my ( $area, $name ) = split( '-', $type );
-        return $res->{figures}{$area}{$name} if defined $area && defined $name;
+        if ( exists $res->{figures}{$area} ) {
+            return $res->{figures}{$area} unless defined $name;
+            return $res->{figures}{$area}{$name};
+        }
     }
     else {
         return $res->{figures};
@@ -383,7 +386,9 @@ Example:
 
 sub bulk_import {
     my ( $self, $header, $body ) = @_;
-    croak ArangoDB::ClientException->new('2nd parameter must be ARRAY reference.')
+    croak( ArangoDB::ClientException->new('1st parameter must be ARRAY reference.') )
+        unless $header && ref($header) eq 'ARRAY';
+    croak( ArangoDB::ClientException->new('2nd parameter must be ARRAY reference.') )
         unless $body && ref($body) eq 'ARRAY';
     my $api  = API_IMPORT . '?collection=' . $self->{id};
     my $data = join "\n", map { encode_json($_) } ( $header, @$body );
@@ -413,7 +418,7 @@ Example:
 
 sub bulk_import_self_contained {
     my ( $self, $documents ) = @_;
-    croak ArangoDB::ClientException->new('Parameter must be ARRAY reference.')
+    croak( ArangoDB::ClientException->new('Parameter must be ARRAY reference.') )
         unless $documents && ref($documents) eq 'ARRAY';
     my $api  = API_IMPORT . '?type=documents&collection=' . $self->{id};
     my $data = join "\n", map { encode_json($_) } @$documents;
@@ -601,9 +606,7 @@ sub range {
     $options ||= {};
     my $data = { collection => $self->{id}, attribute => $attr, left => $lower, right => $upper, };
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(closed limit skip);
-    if ( exists $data->{closed} ) {
-        $data->{closed} = $data->{closed} ? JSON::true : JSON::false;
-    }
+    $data->{closed} = $data->{closed} ? JSON::true : JSON::false;
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_RANGE, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(range) for the collection(%s)' );
@@ -925,12 +928,15 @@ See:
 sub get_index {
     my ( $self, $index_id ) = @_;
     $index_id = defined $index_id ? $index_id : q{};
-    my $api = API_INDEX . '/' . $index_id;
-    my $res = eval { $self->{connection}->http_get($api) };
+    my $api   = API_INDEX . '/' . $index_id;
+    my $index = eval {
+        my $res = $self->{connection}->http_get($api);
+        $self->_get_index_instance($res);
+    };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    return $self->_get_index_instance($res);
+    return $index;
 }
 
 =pod
@@ -942,13 +948,15 @@ Returns list of indexes of the collection.
 =cut
 
 sub indexes {
-    my $self = shift;
-    my $api  = API_INDEX . '?collection=' . $self->{id};
-    my $res  = eval { $self->{connection}->http_get($api) };
+    my $self    = shift;
+    my $api     = API_INDEX . '?collection=' . $self->{id};
+    my @indexes = eval {
+        my $res = $self->{connection}->http_get($api);
+        map { $self->_get_index_instance($_) } @{ $res->{indexes} };
+    };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
     }
-    my @indexes = map { $self->_get_index_instance($_) } @{ $res->{indexes} };
     return \@indexes;
 }
 
@@ -991,8 +999,15 @@ sub _get_index_instance {
     elsif ( $type eq 'cap' ) {
         return ArangoDB::Index::CapConstraint->new( $conn, $index );
     }
-    else {
+    elsif ( $type =~ /^geo[12]$/ ) {
         return ArangoDB::Index::Geo->new( $conn, $index );
+    }
+    else {
+        croak(
+            ArangoDB::ServerException->new(
+                { code => 500, status => '', detail => { errorMessage => "Unknown index type($type)", } }
+            )
+        );
     }
 }
 

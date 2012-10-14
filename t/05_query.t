@@ -44,15 +44,14 @@ subtest 'Normal statement' => sub {
     ];
     is_deeply( \@docs, $expects );
 
-    my $e = exception {
+    like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
                 http_post => sub {die}
             }
         );
         $sth->execute();
-    };
-    like $e, qr/^Failed to execute query/;
+    }, qr/^Failed to execute query/;
 
 };
 
@@ -81,11 +80,20 @@ subtest 'Use bind var1' => sub {
     my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute( { do_count => 1, batch_size => 0 } );
     is $cur3->length, 0;
 
-    my $e = exception {
+    like exception {
         $sth->bind( age => {} );
-    };
-    like $e, qr/^Invalid bind parameter value/;
+    }, qr/^Invalid bind parameter value/;
+};
 
+subtest 'Use bind var2' => sub {
+    my $db  = ArangoDB->new($config);
+    my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
+    lives_ok {
+        $sth->bind( [] );
+        $sth->bind( 10, 0 );
+        $sth->bind( foo => undef );
+        $sth->bind( bar => q{} );
+    };
 };
 
 subtest 'batch query' => sub {
@@ -108,16 +116,23 @@ subtest 'delete cursor' => sub {
     $sth->bind( age => 10 );
     my $cur = $sth->execute( { batch_size => 2, } );
     $cur->delete;
-    my $e = exception {
+    like exception {
         while ( my $doc = $cur->next() ) {
         }
-    };
-    like $e, qr/^Failed to get next batch cursor/;
+    }, qr/^Failed to get next batch cursor/;
 
-    $e = exception {
+    like exception {
         $cur->delete;
-    };
-    like $e, qr/^Failed to delete cursor/;
+    }, qr/^Failed to delete cursor/;
+
+    like exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_delete => sub {die}
+            }
+        );
+        $cur->delete;
+    }, qr/^Failed to delete cursor/;
 
 };
 
@@ -129,10 +144,9 @@ subtest 'parse query' => sub {
     $binds = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u')->parse();
     is_deeply $binds, [qw/age/];
 
-    my $e = exception {
+    like exception {
         $binds = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETUR')->parse();
-    };
-    like $e, qr/^Failed to parse query/;
+    }, qr/^Failed to parse query/;
 };
 
 subtest 'explain query' => sub {
