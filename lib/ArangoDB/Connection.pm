@@ -2,12 +2,14 @@ package ArangoDB::Connection;
 use strict;
 use warnings;
 use Furl;
-use JSON;
+use JSON ();
 use MIME::Base64;
 use ArangoDB::ConnectOptions;
 use ArangoDB::ServerException;
 
 use Class::Accessor::Lite ( ro => [qw/options/] );
+
+my $JSON = JSON->new->utf8;
 
 sub new {
     my ( $class, $options ) = @_;
@@ -38,7 +40,7 @@ sub http_get {
 
 sub http_post {
     my ( $self, $path, $data ) = @_;
-    $data = encode_json( defined $data ? $data : {} );
+    $data = $JSON->encode( defined $data ? $data : {} );
     my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
     my $res     = $self->{_http_agent}->post( $url, $headers, $data );
@@ -55,7 +57,7 @@ sub http_post_raw {
 
 sub http_put {
     my ( $self, $path, $data ) = @_;
-    $data = encode_json( defined $data ? $data : {} );
+    $data = $JSON->encode( defined $data ? $data : {} );
     my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
     my $res     = $self->{_http_agent}->put( $url, $headers, $data );
@@ -96,13 +98,13 @@ sub _parse_response {
     if ( $code < 200 || $code >= 400 ) {
         my $body = $res->body;
         if ( $body ne q{} ) {
-            my $details = decode_json($body);
+            my $details = $JSON->decode($body);
             my $exception = ArangoDB::ServerException->new( code => $code, status => $status, detail => $details );
             die $exception;
         }
         die ArangoDB::ServerException->new( code => $code, status => $status, detail => {} );
     }
-    my $data = decode_json( $res->body );
+    my $data = $JSON->decode( $res->body );
     return $data;
 }
 
