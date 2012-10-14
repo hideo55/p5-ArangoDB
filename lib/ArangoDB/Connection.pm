@@ -38,7 +38,7 @@ sub http_get {
 
 sub http_post {
     my ( $self, $path, $data ) = @_;
-    $data = defined $data ? encode_json($data) : q{};
+    $data = encode_json( defined $data ? $data : {} );
     my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
     my $res     = $self->{_http_agent}->post( $url, $headers, $data );
@@ -55,7 +55,7 @@ sub http_post_raw {
 
 sub http_put {
     my ( $self, $path, $data ) = @_;
-    $data = defined $data ? encode_json($data) : q{};
+    $data = encode_json( defined $data ? $data : {} );
     my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
     my $res     = $self->{_http_agent}->put( $url, $headers, $data );
@@ -126,8 +126,6 @@ The ArangoDB::Connection class creates a connection to the ArangoDB server.
 Constructor.
 $options if connection option.
 It is arguments of L<ArangoDB::ConnectOptions>.
-
-=back
 
 =head2 options
 

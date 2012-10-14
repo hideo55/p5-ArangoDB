@@ -47,6 +47,7 @@ This supports ArangoDB API implementation 1.01.
 =head2 new($options)
 
 Constructor.
+
 $options is HASH reference.The attributes of $options are:
 
 =over 4
@@ -91,13 +92,11 @@ Proxy url for HTTP connection.
 
 =head2 create($name)
 
-Create new collection.
-Returns instance of L<ArangoDB::Collection>.
+Create new collection. Returns instance of L<ArangoDB::Collection>.
 
 =head2 find($name)
 
-Get a Collection based on $name.
-Returns instance of L<ArangoDB::Collection>.
+Get a Collection based on $name. Returns instance of L<ArangoDB::Collection>.
 If the collection does not exist, returns C<undef>. 
 
 =head2 collection($name)

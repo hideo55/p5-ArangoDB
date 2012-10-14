@@ -59,39 +59,3 @@ sub count {
 
 1;
 __END__
-
-=pod
-
-=head1 NAME
-
-ArangoDB::BindVars - An ArangoDB AQL bind variables
-
-=head1 DESCRIPTION
-
-A simple container for bind variables.
-
-=head1 METHODS
-
-=head2 new()
-
-Constructor.
-
-=head2 get_all()
-
-Returns all bind variables.
-
-=head2 get($key)
-
-Returns bind variable.
-
-=head2 set($vars)
-=head2 set( $key => $val )
-
-Set bind variable(s).
-$vars is HASH reference that set of key/value pairs.
-
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=cut

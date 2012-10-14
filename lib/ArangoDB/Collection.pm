@@ -29,9 +29,7 @@ ArangoDB::Collection - An ArangoDB collection
 
 A instance of ArangoDB collection.
 
-=head1 METHODS
-
-=over 4
+=head1 METHODS FOR COLLECTION HANDLING
 
 =head2 new($connection, $collection_info)
 
@@ -59,6 +57,106 @@ Returns identifer of the collection.
 =head2 status()
 
 Returns status of the collection.
+
+=cut
+
+=pod
+
+=head2 name([$name])
+
+Returns name of collection.
+If $name is set, rename the collection.
+
+=cut
+
+sub name {
+    my ( $self, $name ) = @_;
+    if ($name) {    #rename
+        $self->_put_to_this( 'rename', { name => $name } );
+        $self->{name} = $name;
+    }
+    return $self->{name};
+}
+
+=pod
+
+=head2 count()
+
+Returns number of documents in the collection.
+
+=cut
+
+sub count {
+    my $self = shift;
+    my $res  = $self->_get_from_this('count');
+    return $res->{count};
+}
+
+=pod
+
+=head2 drop()
+
+Drop the collection.
+
+=cut
+
+sub drop {
+    my $self = shift;
+    my $api  = API_COLLECTION . '/' . $self->{id};
+    eval { $self->{connection}->http_delete($api); };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to drop the collection(%s)' );
+    }
+}
+
+=pod
+
+=head2 truncate()
+
+Truncate the collection.
+
+=cut
+
+sub truncate {
+    my $self = shift;
+    eval {
+        my $res = $self->_put_to_this('truncate');
+        $self->{status} = $res->{status};
+    };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to truncate the collection(%s)' );
+    }
+}
+
+=pod
+
+=head2 load()
+
+Load the collection.
+
+=cut
+
+sub load {
+    my $self = shift;
+    my $res  = $self->_put_to_this('load');
+    $self->{status} = $res->{status};
+}
+
+=pod
+
+=head2 unload()
+
+Unload the collection.
+
+=cut
+
+sub unload {
+    my $self = shift;
+    my $res  = $self->_put_to_this('unload');
+    $self->{status} = $res->{status};
+}
+
+=pod
 
 =head2 is_newborn()
 
@@ -128,38 +226,6 @@ Return true if status of the collection is invalid.
 
 sub is_corrupted {
     return $_[0]->{status} >= CORRUPTED;
-}
-
-=pod
-
-=head2 name($name)
-
-Returns name of collection.
-If $name is set, rename the collection.
-
-=cut
-
-sub name {
-    my ( $self, $name ) = @_;
-    if ($name) {    #rename
-        $self->_put_to_this( 'rename', { name => $name } );
-        $self->{name} = $name;
-    }
-    return $self->{name};
-}
-
-=pod
-
-=head2 count()
-
-Returns number of documents in the collection.
-
-=cut
-
-sub count {
-    my $self = shift;
-    my $res  = $self->_get_from_this('count');
-    return $res->{count};
 }
 
 =pod
@@ -261,73 +327,11 @@ sub wait_for_sync {
 
 =pod
 
-=head2 drop()
-
-Drop the collection.
-
-=cut
-
-sub drop {
-    my $self = shift;
-    my $api  = API_COLLECTION . '/' . $self->{id};
-    eval { $self->{connection}->http_delete($api); };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to drop the collection(%s)' );
-    }
-}
-
-=pod
-
-=head2 truncate()
-
-Truncate the collection.
-
-=cut
-
-sub truncate {
-    my $self = shift;
-    eval {
-        my $res = $self->_put_to_this('truncate');
-        $self->{status} = $res->{status};
-    };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to truncate the collection(%s)' );
-    }
-}
-
-=pod
-
-=head2 load()
-
-Load the collection.
-
-=cut
-
-sub load {
-    my $self = shift;
-    my $res  = $self->_put_to_this('load');
-    $self->{status} = $res->{status};
-}
-
-=pod
-
-=head2 unload()
-
-Unload the collection.
-
-=cut
-
-sub unload {
-    my $self = shift;
-    my $res  = $self->_put_to_this('unload');
-    $self->{status} = $res->{status};
-}
-
-=pod
+=head1 METHODS FOR DOCUMENT HANDLING
 
 =head2 document($doc)
 
-Get documnet in the collection based on $doc.
+Get documnet in the collection based on $doc. Returns instance of L<ArangoDB::Document>.
 
 =cut
 
@@ -346,7 +350,9 @@ sub document {
 
 =head2 save($data)
 
-Save document to the collection.
+Save document to the collection. Returns instance of L<ArangoDB::Document>.
+
+    $collection->save( { name => 'John' } );
 
 =cut
 
@@ -369,8 +375,17 @@ sub save {
 
 Import multiple documents at once.
 
-$header is ARRAY reference of attribute names.
-$body is ARRAY reference of document values.
+=over 4
+
+=item $header 
+
+attribute names(ARRAY reference).
+
+=item $body  
+
+document values(ARRAY reference).
+
+=back
 
 Example:
 
@@ -431,9 +446,11 @@ sub bulk_import_self_contained {
 
 =pod
 
+=head1 METHODS FOR EDGE HANDLING
+
 =head2 edge($edge)
 
-Get edge in the collection.
+Get edge in the collection. Returns instance of L<ArangoDB::Edge>.
 
 =cut
 
@@ -450,9 +467,27 @@ sub edge {
 
 =pod
 
-=head2 save_edge($from,$to,$data)
+=head2 save_edge($from,$to[,$data])
 
-Save edge to the collection.
+Save edge to the collection. Returns instance of L<ArangoDB::Edge>.
+
+=over 4
+
+=item $from
+
+The document that start-point of the edge.
+
+=item $to
+
+The document that end-point of the edge.
+
+=item $data
+
+Document data.
+
+=back
+
+    $collection->save_edge($document1,$document2, { rel => 'has-a' });
 
 =cut
 
@@ -471,10 +506,15 @@ sub save_edge {
 
 =pod
 
-=head2 all($options)
+=head1 METHODS FOR SIMPLE QUERY HANDLING
+
+=head2 all([$options])
  
-Send 'all' simple query. (Returns instance of L<ArangoDB::Cursor>.)
-Returns all documents of in the collection.
+Send 'all' simple query. Returns instance of L<ArangoDB::Cursor>.
+
+This will return all documents of in the collection.
+
+    my $cursor = $collection->all({ limit => 100 });
 
 $options is query option(HASH reference).The attributes of $options are:
 
@@ -508,13 +548,23 @@ sub all {
 
 =pod
 
-=item by_example($example,$options)
+=head2 by_example($example[,$options])
 
-Send 'by_example' simple query. (Returns instance of L<ArangoDB::Cursor>.)
+Send 'by_example' simple query. Returns instance of L<ArangoDB::Cursor>.
+
 This will find all documents matching a given example.
 
-$example is the exmaple.
-$options is query option(HASH reference).The attributes of $options are:
+    my $cursor = $collection->by_example({ age => 20 });
+
+=over 4
+
+=item $example
+
+The exmaple.
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
 
 =over 4
 
@@ -528,7 +578,7 @@ The documents to skip in the query. (optional)
 
 =back 
 
-    my $cursor = $collection->by_example({ age => 20 });
+=back
 
 =cut
 
@@ -548,7 +598,8 @@ sub by_example {
 
 =head2 first_example($example)
 
-Send 'first_example' simple query. (Returns instance of L<ArangoDB::Document>.)
+Send 'first_example' simple query. Returns instance of L<ArangoDB::Document>.
+
 This will return the first document matching a given example.
 
 $example is the exmaple.
@@ -569,17 +620,33 @@ sub first_example {
 
 =pod
 
-=head2 range($attr,$lower,$upper,$options)
+=head2 range($attr,$lower,$upper[,$options])
 
-Send 'range' simple query. (Returns instance of L<ArangoDB::Cursor>.)
+Send 'range' simple query. Returns instance of L<ArangoDB::Cursor>.
+
 It looks for documents in the collection with attribute between two values.
 
 Note: You must declare a skip-list index on the attribute in order to be able to use a range query.
 
-$attr is the attribute path to check.
-$lower is the lower bound.
-$upper is the upper bound.
-$options is query option(HASH reference).The attributes of $options are:
+    my $cursor = $collection->range('age', 20, 29, { closed => 1 } );
+
+=over 4
+
+=item $attr 
+
+The attribute path to check.
+
+=item $lower 
+
+The lower bound.
+
+=item $upper 
+
+The upper bound.
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
 
 =over 4
 
@@ -597,7 +664,7 @@ The documents to skip in the query. (optional)
 
 =back 
 
-    my $cursor = $collection->range('age', 20, 29, { closed => 1 } );
+=back
 
 =cut
 
@@ -616,21 +683,35 @@ sub range {
 
 =pod
 
-=head2 near($latitude,$longitude,$options)
+=head2 near($latitude,$longitude[,$options])
 
-Send 'near' simple query. (Returns instance of L<ArangoDB::Cursor>.)
+Send 'near' simple query. Returns instance of L<ArangoDB::Cursor>.
+
 The default will find at most 100 documents near a given coordinate. 
 The returned list is sorted according to the distance, with the nearest document coming first.
 
-$latitude is the latitude of the coordinate.
-$longitude is longitude of the coordinate.
-$options is query option(HASH reference).The attributes of $options are:
+    $cursor = $collection->near(0,0, { limit => 20 } );
+
+=over 4
+
+=item $latitude 
+
+The latitude of the coordinate.
+
+=item $longitude 
+
+The longitude of the coordinate.
+
+=item $options 
+
+Query option(HASH reference).The attributes of $options are:
 
 =over 4
 
 =item distance
 
-If given, the attribute key used to store the C<distance> to document. (optional)
+If given, the attribute key used to store the C<distance> to document(optional).
+
 C<distance> is  the distance between the given point and the document in meter.
 
 =item limit
@@ -647,7 +728,7 @@ If given, the identifier of the geo-index to use. (optional)
 
 =back 
 
-    $cursor = $collection->near(0,0, { limit => 20 } );
+=back
 
 =cut
 
@@ -665,22 +746,39 @@ sub near {
 
 =pod
 
-=head2 within($latitude,$longitude,$radius,$options)
+=head2 within($latitude,$longitude,$radius[,$options])
 
-Send 'within' simple query. (Returns instance of L<ArangoDB::Cursor>.)
+Send 'within' simple query. Returns instance of L<ArangoDB::Cursor>.
+
 This will find all documents with in a given radius around the coordinate (latitude, longitude).
 The returned list is sorted by distance.
 
-$latitude is the latitude of the coordinate.
-$longitude is longitude of the coordinate.
-$radius is the maximal radius(meter).
-$options is query option(HASH reference).The attributes of $options are:
+    $cursor = $collection->within(0,0, 10 * 1000, { distance => 'distance' } );
+
+=over 4
+
+=item $latitude
+
+The latitude of the coordinate.
+
+=item $longitude
+
+The longitude of the coordinate.
+
+=item $radius 
+
+The maximal radius(meter).
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
 
 =over 4
 
 =item distance
 
-If given, the attribute name used to store the C<distance> to document. (optional)
+If given, the attribute name used to store the C<distance> to document(optional).
+
 C<distance> is  the distance between the given point and the document in meter.
 
 =item limit
@@ -695,7 +793,9 @@ The documents to skip in the query. (optional)
 
 If given, the identifier of the geo-index to use. (optional)
 
-    $cursor = $collection->within(0,0, 10 * 1000, { distance => 'distance' } );
+=back
+
+=back
 
 =cut
 
@@ -714,9 +814,12 @@ sub within {
 
 =pod
 
+=head1 METHODS FOR INDEX HANDLING
+
 =head2 ensure_hash_index($fileds)
 
 Create hash index for the collection. Returns instance of L<ArangoDB::Index::Hash>.
+
 This hash is then used in queries to locate documents in O(1) operations. 
 
 $fileds is the field of index.
@@ -742,6 +845,7 @@ sub ensure_hash_index {
 =head2 ensure_unique_constraint($fileds)
 
 Create unique hash index for the collection. Returns instance of L<ArangoDB::Index::Hash>.
+
 This hash is then used in queries to locate documents in O(1) operations. 
 If using unique hash index then no two documents are allowed to have the same set of attribute values.
 
@@ -765,6 +869,7 @@ sub ensure_unique_constraint {
 =head2 ensure_skiplist($fileds)
 
 Create skip-list index for the collection. Returns instance of L<ArangoDB::Index::SkipList>.
+
 This skip-list is then used in queries to locate documents within a given range. 
 
 $fileds is the field of index.
@@ -790,6 +895,7 @@ sub ensure_skiplist {
 =head2 ensure_unique_skiplist($fileds)
 
 Create unique skip-list index for the collection. Returns instance of L<ArangoDB::Index::SkipList>.
+
 This skip-list is then used in queries to locate documents within a given range. 
 If using unique skip-list then no two documents are allowed to have the same set of attribute values.
 
@@ -810,12 +916,21 @@ sub ensure_unique_skiplist {
 
 =pod
 
-=head2 ensure_geo_index($fileds,$is_geojson)
+=head2 ensure_geo_index($fileds[,$is_geojson])
 
 Create geo index for the collection. Returns instance of L<ArangoDB::Index::Geo>.
 
-$fileds is the field of index.
-$is_geojson is boolean flag. If it is true, then the order within the list is longitude followed by latitude. 
+=over 4
+
+=item $fileds
+
+The field of index.
+
+=item $is_geojson 
+
+Boolean flag. If it is true, then the order within the list is longitude followed by latitude. 
+
+=back
 
 Create an geo index for a list attribute:
 
@@ -847,13 +962,20 @@ sub ensure_geo_index {
 
 =pod
 
-=head2 ensure_geo_constraint($fileds,$ignore_null)
+=head2 ensure_geo_constraint($fileds[,$ignore_null])
 
 It works like ensure_geo_index() but requires that the documents contain a valid geo definition.
 Returns instance of L<ArangoDB::Index::Geo>.
 
-$fileds is the field of index.
-$ignore_null is boolean flag. If it is true, then documents with a null in location or at least one null in latitude or longitude are ignored.
+=over 4
+
+=item $fileds
+
+The field of index.
+
+=item $ignore_null
+
+Boolean flag. If it is true, then documents with a null in location or at least one null in latitude or longitude are ignored.
 
 =back
 
@@ -880,6 +1002,7 @@ sub ensure_geo_constraint {
 =head2 ensure_cap_constraint($size)
 
 Create cap constraint for the collection.Returns instance of L<ArangoDB::Index::CapConstraint>.
+
 It is possible to restrict the size of collection.
 
 $size is the maximal number of documents.
@@ -911,15 +1034,15 @@ See:
 
 =over 4
 
-=itme * L<ArangoDB::Index::Primary>
+=item * L<ArangoDB::Index::Primary>
 
-=itme * L<ArangoDB::Index::Hash>
+=item * L<ArangoDB::Index::Hash>
 
-=itme * L<ArangoDB::Index::SkipList>
+=item * L<ArangoDB::Index::SkipList>
 
-=itme * L<ArangoDB::Index::Geo>
+=item * L<ArangoDB::Index::Geo>
 
-=itme * L<ArangoDB::Index::CapConstraint>
+=item * L<ArangoDB::Index::CapConstraint>
 
 =back
 
@@ -1023,3 +1146,12 @@ sub _server_error_handler {
 
 1;
 __END__
+
+=pod
+
+=head1 AUTHOR
+
+Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
+
+=cut
+

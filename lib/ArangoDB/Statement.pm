@@ -125,10 +125,11 @@ ArangoDB::Statement - ArangoDB AQL handler
     }
   
     # Use bind variable
-    $sth = $db->query('FOR u IN users FILTER u.age >= @age SORT u.name ASC RETURN u');
-    $sth->bind( age => 18 );
-    $cur = $sth->execute();
-    while( my $doc = $cur->next() ){
+    $cur2 = $db->query(
+        'FOR u IN users FILTER u.age >= @age SORT u.name ASC RETURN u'
+    )->bind( age => 18 )->execute({ do_count => 1, batch_size => 10 });
+    
+    while( my $doc = $cur2->next() ){
         # do something
     }    
 
@@ -143,8 +144,17 @@ A AQL(Arango Query Language) statement handler.
 
 Constructor.
 
-$conn is instance of ArangoDB::Connection.
-$query is AQL statement.
+=over 4
+
+=item $conn 
+
+Instance of ArangoDB::Connection.
+
+=item $query 
+
+AQL statement.
+
+=back
 
 =head2 execute($options)
 
@@ -167,29 +177,51 @@ Boolean flag that indicates whether the number of documents found should be retu
 =head2 parse()
 
 Parse a query string without executing.
+
 Return ARRAY reference of bind variable names.
 
 =head2 explain()
 
 Get execution plan of query.
+
 Returns ARRAY reference.
 
 =head2 bind_vars($name)
 
 Returns bind variable based on $name.
+
 If $name does not passed, returns all bind variables as HASH reference.
 
 =head2 bind($vars)
-=head2 bind($key => $val)
+
+=head2 bind($key => $value)
 
 Set bind variable(s).
-$vars is HASH reference that set of key/value pairs.
+
+=over 4
+
+=item $vars 
+
+HASH reference that set of key/value pairs.
+
+=item $key 
+
+Bind variable name.
+
+=item $value 
+
+Bind variable value.
+
+=back
 
 Returns instance of L<ArangoDB::Statement>.You can use method chain:
 
     my $cursor = $db->query(
-        'FOR u IN users FILTER u.age >= @age SORT u.name ASC RETURN u'
-    )->bind( age => 19 )->execute();
+        'FOR u IN users FILTER u.type == @type && u.age >= @age SORT u.name ASC RETURN u'
+    )->bind({
+        type => 1, 
+        age  => 19 
+    })->execute();
 
 =head1 AUTHOR
 

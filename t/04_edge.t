@@ -37,6 +37,9 @@ subtest 'create edge' => sub {
     my $edge2 = $coll->edge($edge1);
     is_deeply( $edge1, $edge2 );
 
+    my $edge3 = $coll->save_edge( $doc1, $doc2 );
+    is_deeply $edge3->content, {};
+
     like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {

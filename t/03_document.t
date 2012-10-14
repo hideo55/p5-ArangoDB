@@ -43,6 +43,9 @@ subtest 'create document' => sub {
     my $doc2 = $coll->document($doc1);
     is_deeply $doc1, $doc2;
 
+    my $doc3 = $coll->save();
+    is_deeply $doc3->content, {};
+
     my $e = exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {

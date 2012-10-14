@@ -100,6 +100,15 @@ __END__
 
 ArangoDB::Cursor - An ArangoDB cursor
 
+=head1 SYNOPSIS
+
+    my $cursor = $db->query('FOR u IN users RETURN u')->execute();
+    my @docs;
+    while( my $doc = $cursor->next ){
+        push @docs, $doc;
+    }
+    $cursor->delete;
+
 =head1 DESCRIPTION
 
 Instance of AQL Query Cursor.

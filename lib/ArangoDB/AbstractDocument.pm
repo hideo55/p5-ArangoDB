@@ -78,7 +78,7 @@ sub save {
 
 sub delete {
     my $self = shift;
-    my $res = eval { $self->{connection}->http_delete( $self->_api_path ) };
+    eval { $self->{connection}->http_delete( $self->_api_path ) };
     if ($@) {
         $self->_server_error_handler( $@, 'delete' );
     }
