@@ -25,19 +25,23 @@ Constructor.
 
 =head2 id()
 
-Identifier of cap constraint.
+Returns identifier of index.
 
 =head2 type()
 
-Index type.
+Returns type of index.
+
+=head2 collection_id()
+
+Returns identifier of the index.
+
+=head2 drop()
+
+Drop the index.
 
 =head2 size()
 
 Restriction size of collection.
-
-=head1 SEE ALSO
-
-L<ArangoDB::Index>
 
 =head1 AUTHOR
 

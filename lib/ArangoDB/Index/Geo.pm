@@ -25,11 +25,19 @@ Constructor.
 
 =head2 id()
 
-Identifier of index.
+Returns identifier of index.
 
 =head2 type()
 
-Index type.
+Returns type of index.
+
+=head2 collection_id()
+
+Returns identifier of the index.
+
+=head2 drop()
+
+Drop the index.
 
 =head2 fields()
 
@@ -42,10 +50,6 @@ If it is true, This geo-spatial index is using geojson format.
 =head2 constraint()
 
 If it is true, this index is geo-spatial constraint.
-
-=head1 SEE ALSO
-
-L<ArangoDB::Index>
 
 =head1 AUTHOR
 
