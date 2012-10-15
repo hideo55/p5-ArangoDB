@@ -28,9 +28,10 @@ SYNOPSIS
       }
   
       # AQL
-      my $cur = $db->query( 
+      my $cursor2 = $db->query( 
           'FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u' 
       )->bind( { age => 19 } )->execute();
+      my $docs = $cursor2->next_all;
 
 DESCRIPTION
     ArangoDB is ArangoDB client for Perl.

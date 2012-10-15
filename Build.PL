@@ -52,7 +52,6 @@ my $build = $class->new(
     no_index   => { 'directory'   => [ 't', 'xt', 'inc' ] },
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? [qw(t/ xt/)] : ['t/'],
     create_readme      => 1,
-    create_makefile_pl => 'traditional',
     meta_merge         => {
         keywords  => [qw/arngodb database/],
         resources => {
