@@ -17,7 +17,8 @@ recommends 'Data::Clone';
 tests 't/*.t';
 author_tests 'xt';
 
-test_requires 'Test::More';
+test_requires 'Test::More'    => '0.94';
+test_requires 'Test::Harness' => '3.00';
 test_requires 'Test::Fatal';
 test_requires 'Test::TCP';
 test_requires 'File::Temp';
