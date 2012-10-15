@@ -21,7 +21,10 @@
 \.sw[po]$
 \.project
 \.gitignore
-MYMETA\.yml
-MYMETA\.json 
+MYMETA\.
 ^cover_db
 ^.includepath
+^\_build
+^Build$
+^ArangoDB-
+^MANIFEST\.
