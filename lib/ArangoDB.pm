@@ -1,6 +1,8 @@
 package ArangoDB;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use Carp qw(croak);
 use ArangoDB::Connection;
 use ArangoDB::Collection;
@@ -14,7 +16,7 @@ use overload '&{}' => sub {
     },
     fallback => 1;
 
-our $VERSION = '0.01_03';
+our $VERSION = '0.01';
 $VERSION = eval $VERSION;
 
 sub new {
@@ -120,9 +122,10 @@ ArangoDB - ArangoDB client for Perl.
   }
   
   # AQL
-  my $cur = $db->query( 
+  my $cursor2 = $db->query( 
       'FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u' 
   )->bind( { age => 19 } )->execute();
+  my $docs = $cursor2->next_all;
 
 =head1 DESCRIPTION
 

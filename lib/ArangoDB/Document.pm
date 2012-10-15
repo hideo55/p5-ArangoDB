@@ -1,6 +1,8 @@
 package ArangoDB::Document;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use Carp qw(croak);
 use parent 'ArangoDB::AbstractDocument';
 use ArangoDB::Constants qw(:api);

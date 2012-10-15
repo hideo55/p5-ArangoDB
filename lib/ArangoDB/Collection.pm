@@ -1,6 +1,8 @@
 package ArangoDB::Collection;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use JSON;
 use Carp qw(croak);
 use Scalar::Util qw(weaken);
@@ -218,7 +220,7 @@ sub is_deleted {
 
 =pod
 
-=head2 is_corruped()
+=head2 is_corrupted()
 
 Return true if status of the collection is invalid.
 

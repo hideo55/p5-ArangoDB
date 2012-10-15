@@ -1,6 +1,8 @@
 package ArangoDB::Cursor;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use Carp qw(croak);
 use Scalar::Util qw(weaken);
 use ArangoDB::Document;
@@ -53,6 +55,17 @@ sub next {
         return ArangoDB::Document->new( $self->{connection}, _clone( $self->{result}->[ $self->{position}++ ] ) );
     }
     return;
+}
+
+sub all {
+    my $self = shift;
+    my @result;
+    while ( !@result || $self->_get_next_batch() ) {
+        my $last = $self->{length} -1;
+        push @result, ( @{ $self->{result} } )[ 0 .. $last ];
+    }
+    my $conn = $self->{connection};
+    return [ map { ArangoDB::Document->new( $conn, $_ ) } @result ];
 }
 
 sub _get_next_batch {
@@ -122,6 +135,10 @@ Constructor.
 =head2 next()
 
 Returns next document(Instance of L<ArangoDB::Document>).
+
+=head2 all()
+
+Rreturns all documents in the cursor.(ARRAY reference)
 
 =head2 delete()
 

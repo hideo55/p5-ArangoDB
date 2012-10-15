@@ -1,6 +1,8 @@
 package ArangoDB::Index::Geo;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use parent 'ArangoDB::Index';
 use Class::Accessor::Lite ( ro => [qw/fields geoJson constraint/], );
 

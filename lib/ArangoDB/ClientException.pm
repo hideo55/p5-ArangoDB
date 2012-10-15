@@ -1,6 +1,8 @@
 package ArangoDB::ClientException;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use Class::Accessor::Lite ( ro => [qw/message package file line subrutine/] );
 use overload
     q{""}    => sub { $_[0]->message },

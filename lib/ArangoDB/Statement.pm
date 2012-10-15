@@ -1,6 +1,8 @@
 package ArangoDB::Statement;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use Carp qw(croak);
 use JSON ();
 use ArangoDB::Cursor;

@@ -23,8 +23,8 @@ sub init {
     my $users = $db->collection('users');
     $users->save( { name => 'John Doe', age => 42 } );
     $users->save( { name => 'Foo',      age => 10 } );
-    $users->save( { name => 'Bar',      age => 11 } );
-    $users->save( { name => 'Baz',      age => 20 } );
+    $users->save( { name => 'Bar',      age => 20 } );
+    $users->save( { name => 'Baz',      age => 11 } );
 }
 
 subtest 'Normal statement' => sub {
@@ -37,8 +37,8 @@ subtest 'Normal statement' => sub {
         push @docs, $doc->content;
     }
     my $expects = [
-        { name => 'Bar',      age => 11 },
-        { name => 'Baz',      age => 20 },
+        { name => 'Bar',      age => 20 },
+        { name => 'Baz',      age => 11 },
         { name => 'Foo',      age => 10 },
         { name => 'John Doe', age => 42 },
     ];
@@ -67,18 +67,31 @@ subtest 'Use bind var1' => sub {
     while ( my $doc = $cur->next() ) {
         push @docs, $doc->content;
     }
-    my $expects = [ { name => 'Bar', age => 11 }, { name => 'Baz', age => 20 }, { name => 'John Doe', age => 42 }, ];
-    is_deeply( \@docs, $expects );
+
+    my $expects = [ { name => 'Bar', age => 20 }, { name => 'Baz', age => 11 }, { name => 'John Doe', age => 42 }, ];
+    is_deeply \@docs, $expects;
     my $cur2 = $sth->bind( { age => 20 } )->execute();
     my @docs2;
     while ( my $doc = $cur2->next() ) {
         push @docs2, $doc->content;
     }
-    my $expects2 = [ { name => 'John Doe', age => 42 }, ];
-    is_deeply( \@docs2, $expects2 );
+    is_deeply \@docs2, [ { name => 'John Doe', age => 42 }, ];
+
+    my $docs3 = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u')->bind( age => 10 )
+        ->execute->all;
+    is_deeply [ map { $_->content } @$docs3 ], $expects;
 
     my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute( { do_count => 1, batch_size => 0 } );
     is $cur3->length, 0;
+
+    my $docs4
+        = $db->query('FOR u IN users FILTER u.age == @age SORT u.name ASC RETURN u')->bind( age => 11 )->execute->all;
+    is scalar @$docs4, 1;
+    is_deeply $docs4->[0]->content, { name => 'Baz', age => 11 };
+
+    like exception {
+        $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u')->execute;
+    }, qr/^Failed to execute query/;
 
     like exception {
         $sth->bind( age => {} );
@@ -98,7 +111,7 @@ subtest 'Use bind var2' => sub {
 
 subtest 'batch query' => sub {
     my $db  = ArangoDB->new($config);
-    my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
+    my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.age ASC RETURN u');
     $sth->bind( age => 10 );
     my $cur = $sth->execute( { batch_size => 2, do_count => 1 } );
     is $cur->count,  3;
@@ -107,7 +120,13 @@ subtest 'batch query' => sub {
     while ( my $doc = $cur->next() ) {
         push @docs, $doc->content;
     }
-    is scalar @docs, 3;
+
+    my $expects = [ { name => 'Baz', age => 11 }, { name => 'Bar', age => 20 }, { name => 'John Doe', age => 42 }, ];
+    is_deeply \@docs, $expects;
+
+    my $docs2
+        = $db->query('FOR u IN users FILTER u.age > @age SORT u.age ASC RETURN u')->bind( age => 10 )->execute->all;
+    is_deeply [ map { $_->content } @$docs2 ], $expects;
 };
 
 subtest 'delete cursor' => sub {

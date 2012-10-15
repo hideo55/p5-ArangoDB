@@ -1,6 +1,8 @@
 package ArangoDB::ConnectOptions;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 use Data::Util qw(:check);
 use List::MoreUtils qw(none);
 

@@ -1,6 +1,8 @@
 package ArangoDB::BindVars;
 use strict;
 use warnings;
+use utf8;
+use 5.008001;
 
 sub new {
     my $class = shift;
