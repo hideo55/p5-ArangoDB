@@ -105,7 +105,7 @@ ArangoDB - ArangoDB client for Perl.
   });
   
   # Find or create collection
-  my $foo = $db->foo;
+  my $foo = $db->('foo');
   
   # Create new document
   $foo->save({ x => 42, y => { a => 1, b => 2, } });
@@ -200,6 +200,10 @@ If the collection does not exist, returns C<undef>.
 Get or create a Collection based on $name.
 
 If the Collection $name does not exist, Create it.
+
+There is shorthand method for get collection instance.
+
+    my $collection = $db->('collection-name');
 
 =head2 collections()
 
