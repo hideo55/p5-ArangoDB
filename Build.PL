@@ -22,7 +22,7 @@ END_OF_CODE
 my $build = $class->new(
     name                 => 'ArangoDB',
     module_name          => 'ArangoDB',
-    dist_author          => 'Hideaki Ohno<hide.o.j55@gmail.com >',
+    dist_author          => 'Hideaki Ohno<hide.o.j55@gmail.com>',
     license              => 'perl',
     recursive_test_files => 1,
     dynamic_config       => 0,
@@ -44,7 +44,7 @@ my $build = $class->new(
         'Carp'                  => 0,
         'JSON'                  => '2.53',
         'List::MoreUtils'       => 0,
-        'Furl'                  => '0.38',
+        'Furl'                  => '0.42',
         'MIME::Base64'          => 0,
         'Data::Util'            => '0.59',
     },
