@@ -15,3 +15,5 @@ MYMETA.yml
 .includepath
 cover_db
 META.json
+_build
+Build
