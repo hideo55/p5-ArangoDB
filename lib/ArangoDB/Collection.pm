@@ -41,8 +41,7 @@ Constructor.
 
 sub new {
     my ( $class, $conn, $raw_collection ) = @_;
-    my $self = bless {}, $class;
-    $self->{connection} = $conn;
+    my $self = bless { connection => $conn, }, $class;
     weaken( $self->{connection} );
     for my $key (qw/id name status/) {
         $self->{$key} = $raw_collection->{$key};

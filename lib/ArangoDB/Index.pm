@@ -14,8 +14,7 @@ use overload
 
 sub new {
     my ( $class, $conn, $params ) = @_;
-    my $self = bless {%$params}, $class;
-    $self->{connection} = $conn;
+    my $self = bless { %$params, connection => $conn, }, $class;
     weaken( $self->{connection} );
     $self->{collection_id} = ( split '/', $self->{id} )[0];
     return $self;

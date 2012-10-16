@@ -5,6 +5,7 @@ use utf8;
 use 5.008001;
 use Carp qw(croak);
 use JSON ();
+use Scalar::Util qw(weaken);
 use ArangoDB::Cursor;
 use ArangoDB::BindVars;
 use ArangoDB::Constants qw(:api);
@@ -18,8 +19,9 @@ sub new {
     my $self = bless {
         connection => $conn,
         query      => $query,
+        bind_vars  => ArangoDB::BindVars->new(),
     }, $class;
-    $self->{bind_vars} = ArangoDB::BindVars->new();
+    weaken( $self->{connection} );
     return $self;
 }
 

@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use utf8;
 use 5.008001;
-use Furl;
+use Furl::HTTP;
 use JSON ();
 use MIME::Base64;
 use ArangoDB::ConnectOptions;
@@ -15,90 +15,109 @@ my $JSON = JSON->new->utf8;
 
 sub new {
     my ( $class, $options ) = @_;
-    my $self = bless {}, $class;
     my $opts = ArangoDB::ConnectOptions->new($options);
-    my $furl = Furl->new(
+    my $headers = [ Host => $opts->host, Connection => $opts->keep_alive ? 'Keep-Alive' : 'Close', ];
+    if ( $opts->auth_type && $opts->auth_user ) {
+        push @$headers, Authorization =>
+            sprintf( '%s %s', $opts->auth_type, encode_base64( $opts->auth_user . ':' . $opts->auth_passwd ) );
+    }
+    my $furl = Furl::HTTP->new(
         timeout => $opts->timeout,
-        headers => [ 'Connection' => $opts->keep_alive ? 'Keep-Alive' : 'Close', ],
+        headers => $headers,
         proxy   => $opts->proxy,
     );
-    $self->{_http_agent} = $furl;
-    $self->{api_str}     = 'http://' . $opts->host . ':' . $opts->port;
-    if ( $opts->auth_type && $opts->auth_user ) {
-        $self->{auth_info}
-            = sprintf( '%s %s', $opts->auth_type, encode_base64( $opts->auth_user . ':' . $opts->auth_passwd ) );
-    }
-    $self->{options} = $opts;
+
+    my $self = bless {
+        options   => $opts,
+        _req_args => {
+            scheme => 'http',
+            host   => $opts->host,
+            port   => $opts->port,
+        },
+        _http_agent => $furl,
+    }, $class;
+
     return $self;
 }
 
 sub http_get {
     my ( $self, $path ) = @_;
-    my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers();
-    my $res     = $self->{_http_agent}->get( $url, $headers );
-    return $self->_parse_response($res);
+    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
+        %{ $self->{_req_args} },
+        method     => 'GET',
+        path_query => $path,
+        headers    => $headers,
+    );
+    return $self->_parse_response( $code, $msg, $body );
 }
 
 sub http_post {
     my ( $self, $path, $data ) = @_;
     $data = $JSON->encode( defined $data ? $data : {} );
-    my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
-    my $res     = $self->{_http_agent}->post( $url, $headers, $data );
-    return $self->_parse_response($res);
+    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
+        %{ $self->{_req_args} },
+        method     => 'POST',
+        path_query => $path,
+        headers    => $headers,
+        content    => $data,
+    );
+    return $self->_parse_response( $code, $msg, $body );
 }
 
 sub http_post_raw {
     my ( $self, $path, $data ) = @_;
-    my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
-    my $res     = $self->{_http_agent}->post( $url, $headers, $data );
-    return $self->_parse_response($res);
+    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
+        %{ $self->{_req_args} },
+        method     => 'POST',
+        path_query => $path,
+        headers    => $headers,
+        content    => $data,
+    );
+    return $self->_parse_response( $code, $msg, $body );
 }
 
 sub http_put {
     my ( $self, $path, $data ) = @_;
     $data = $JSON->encode( defined $data ? $data : {} );
-    my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers($data);
-    my $res     = $self->{_http_agent}->put( $url, $headers, $data );
-    return $self->_parse_response($res);
+    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
+        %{ $self->{_req_args} },
+        method     => 'PUT',
+        path_query => $path,
+        headers    => $headers,
+        content    => $data,
+    );
+    return $self->_parse_response( $code, $msg, $body );
 }
 
 sub http_delete {
     my ( $self, $path ) = @_;
-    my $url     = $self->{api_str} . $path;
     my $headers = $self->_build_headers();
-    my $res     = $self->{_http_agent}->delete( $url, $headers );
-    return $self->_parse_response($res);
+    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
+        %{ $self->{_req_args} },
+        method     => 'DELETE',
+        path_query => $path,
+        headers    => $headers,
+    );
+    return $self->_parse_response( $code, $msg, $body );
 }
 
 sub _build_headers {
     my ( $self, $body ) = @_;
     my $content_length = length( $body || q{} );
-    my $options        = $self->{options};
-    my @headers        = ();
-
-    push @headers, Host => $options->host;
-
+    my @headers = ();
     if ( $content_length > 0 ) {
         push @headers, 'Content-Type' => 'application/json';
     }
-
-    if ( exists $self->{auth_info} ) {
-        push @headers, Authorization => $self->{auth_info};
-    }
-
     return \@headers;
 }
 
 sub _parse_response {
-    my ( $self, $res ) = @_;
-    my $code   = $res->code;
-    my $status = $res->status;
+    my ( $self, $code, $status, $body ) = @_;
     if ( $code < 200 || $code >= 400 ) {
-        my $body = $res->body;
         if ( $body ne q{} ) {
             my $details = $JSON->decode($body);
             my $exception = ArangoDB::ServerException->new( code => $code, status => $status, detail => $details );
@@ -106,7 +125,7 @@ sub _parse_response {
         }
         die ArangoDB::ServerException->new( code => $code, status => $status, detail => {} );
     }
-    my $data = $JSON->decode( $res->body );
+    my $data = $JSON->decode($body);
     return $data;
 }
 

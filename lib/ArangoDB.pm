@@ -21,8 +21,7 @@ $VERSION = eval $VERSION;
 
 sub new {
     my ( $class, $options ) = @_;
-    my $self = bless {}, $class;
-    $self->{connection} = ArangoDB::Connection->new($options);
+    my $self = bless { connection => ArangoDB::Connection->new($options), }, $class;
     return $self;
 }
 
@@ -43,8 +42,8 @@ sub create {
 
 sub find {
     my ( $self, $name ) = @_;
-    my $api = API_COLLECTION . '/' . $name;
-    my $collection = eval { 
+    my $api        = API_COLLECTION . '/' . $name;
+    my $collection = eval {
         my $res = $self->{connection}->http_get($api);
         ArangoDB::Collection->new( $self->{connection}, $res );
     };

@@ -8,6 +8,14 @@ use List::MoreUtils qw(none);
 
 sub new {
     my ( $class, $options ) = @_;
+
+    if ( !defined $options ) {
+        $options = {};
+    }
+    elsif ( !is_hash_ref($options) ) {
+        die "Argument must be HASH reference";
+    }
+
     my %opts = ( %{ $class->_get_defaults() }, %$options );
     my $self = bless { _options => \%opts }, $class;
     $self->_validate();

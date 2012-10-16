@@ -16,8 +16,11 @@ my $db = ArangoDB->new(
 );
 
 isa_ok( $db, "ArangoDB" );
-ok exists $db->{connection}{auth_info};
 ok exception { $db->find('foo') };
+
+like exception{
+    ArangoDB->new('foo');
+}, qr/^Argument must be HASH reference/;
 
 my $db2 = ArangoDB->new(
     {   port      => 0,

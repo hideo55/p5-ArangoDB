@@ -11,8 +11,7 @@ use overload
 
 sub new {
     my ( $class, $conn, $doc ) = @_;
-    my $self = bless {}, $class;
-    $self->{connection} = $conn;
+    my $self = bless { connection => $conn, }, $class;
     weaken( $self->{connection} );
     my $id  = CORE::delete $doc->{_id};
     my $rev = CORE::delete $doc->{_rev};

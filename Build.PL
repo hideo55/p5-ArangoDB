@@ -44,7 +44,7 @@ my $build = $class->new(
         'Carp'                  => 0,
         'JSON'                  => '2.53',
         'List::MoreUtils'       => 0,
-        'Furl'                  => '0.42',
+        'Furl::HTTP'                  => '0.42',
         'MIME::Base64'          => 0,
         'Data::Util'            => '0.59',
     },
