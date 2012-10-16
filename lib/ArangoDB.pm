@@ -113,10 +113,10 @@ ArangoDB - ArangoDB client for Perl.
   $foo->name('new_name'); # rename the collection
   
   # Create hash index.
-  $foo->create_hash_index([qw/x y/]);
+  $foo->ensure_hash_index([qw/x y/]);
   
   # Simple query
-  my $cursor = $db->new_name->by_example({ b => 2 });
+  my $cursor = $db->('new_name')->by_example({ b => 2 });
   while( my $doc = $cursor->next ){
       # do something
   }
