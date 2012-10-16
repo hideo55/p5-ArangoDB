@@ -16,14 +16,13 @@ my $config = {
     keep_alive => 1,
 };
 
-init();
-
 sub init {
     my $db = ArangoDB->new($config);
     map { $_->drop } @{ $db->collections };
 }
 
 subtest 'create collection' => sub {
+    init();
     my $db = ArangoDB->new($config);
     my $coll;
     lives_ok { $coll = $db->create("foo"); } 'Create new collection';
@@ -49,7 +48,12 @@ subtest 'create collection' => sub {
 };
 
 subtest 'get collection' => sub {
-    my $db   = ArangoDB->new($config);
+    init();
+    my $db = ArangoDB->new($config);
+
+    $db->('foo');
+    $db->('baz');
+
     my $coll = $db->find('bar');
     is $coll, undef, 'Returns undef if the collection does not exist.';
 
@@ -75,7 +79,11 @@ subtest 'get collection' => sub {
 };
 
 subtest 'get all collections' => sub {
-    my $db    = ArangoDB->new($config);
+    init();
+    my $db = ArangoDB->new($config);
+
+    $db->('foo');
+    $db->('baz');
     my $colls = $db->collections;
     is scalar @$colls, 2;
     like exception {

@@ -11,7 +11,7 @@ SYNOPSIS
       });
   
       # Find or create collection
-      my $foo = $db->foo;
+      my $foo = $db->('foo');
   
       # Create new document
       $foo->save({ x => 42, y => { a => 1, b => 2, } });
@@ -19,10 +19,10 @@ SYNOPSIS
       $foo->name('new_name'); # rename the collection
   
       # Create hash index.
-      $foo->create_hash_index([qw/x y/]);
+      $foo->ensure_hash_index([qw/x y/]);
   
       # Simple query
-      my $cursor = $db->new_name->by_example({ b => 2 });
+      my $cursor = $db->('new_name')->by_example({ b => 2 });
       while( my $doc = $cursor->next ){
           # do something
       }
@@ -31,7 +31,7 @@ SYNOPSIS
       my $cursor2 = $db->query( 
           'FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u' 
       )->bind( { age => 19 } )->execute();
-      my $docs = $cursor2->next_all;
+      my $docs = $cursor2->all;
 
 DESCRIPTION
     ArangoDB is ArangoDB client for Perl.
@@ -88,6 +88,10 @@ METHODS
     Get or create a Collection based on $name.
 
     If the Collection $name does not exist, Create it.
+
+    There is shorthand method for get collection instance.
+
+        my $collection = $db->('collection-name');
 
   collections()
     Get all collections. Returns ARRAY reference.

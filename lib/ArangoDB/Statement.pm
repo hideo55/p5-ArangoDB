@@ -216,12 +216,12 @@ Bind variable value.
 
 Returns instance of L<ArangoDB::Statement>.You can use method chain:
 
-    my $cursor = $db->query(
+    my $documents = $db->query(
         'FOR u IN users FILTER u.type == @type && u.age >= @age SORT u.name ASC RETURN u'
     )->bind({
         type => 1, 
         age  => 19 
-    })->execute();
+    })->execute->all;
 
 =head1 AUTHOR
 
