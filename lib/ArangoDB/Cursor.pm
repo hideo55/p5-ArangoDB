@@ -120,11 +120,10 @@ ArangoDB::Cursor - An ArangoDB cursor
     while( my $doc = $cursor->next ){
         push @docs, $doc;
     }
-    $cursor->delete;
 
 =head1 DESCRIPTION
 
-Instance of AQL Query Cursor.
+Instance of ArandoDB Cursor.
 
 =head1 METHODS
 
@@ -138,11 +137,16 @@ Returns next document(Instance of L<ArangoDB::Document>).
 
 =head2 all()
 
-Rreturns all documents in the cursor.(ARRAY reference)
+Rreturns all documents in the cursor.(ARRAY reference).
+
+The cursor on the server will be deleted implicitly.
 
 =head2 delete()
 
-Delete cursor.
+Delete a cursor.
+
+The cursor will automatically be destroyed on the server when the client has retrieved all documents from it. 
+The client can also explicitly destroy the cursor at any earlier time using this method.
 
 =head1 AUTHOR
 
