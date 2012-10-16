@@ -1,6 +1,10 @@
 Revision history for Perl extension ArangoDB
+
+0.02    Tue Oct 16 21:05:00 2012
+        - Fixed document bug
+
 0.01    Tue Oct 16 02:00:00 2012
-				- Switch to Module::Build
+		- Switch to Module::Build
         - Optimized: JSON handling
         - Changed: ArangoDB server start method
         - Add all() method to the ArangoDB::Cursor
