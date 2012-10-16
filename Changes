@@ -1,5 +1,8 @@
 Revision history for Perl extension ArangoDB
 
+0.03    Wed Oct 17 2:35:00 2012
+        - Switch HTTP client Furl to Furl::HTTP
+
 0.02    Tue Oct 16 21:05:00 2012
         - Fixed document bug
 
