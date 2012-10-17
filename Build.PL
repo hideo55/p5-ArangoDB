@@ -48,7 +48,7 @@ my $build = $class->new(
         'MIME::Base64'          => 0,
         'Data::Util'            => '0.59',
     },
-    recommands => { 'Data::Clone' => 0, },
+    recommends => { 'Data::Clone' => 0, },
     no_index   => { 'directory'   => [ 't', 'xt', 'inc' ] },
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? [qw(t/ xt/)] : ['t/'],
     create_readme  => 1,
