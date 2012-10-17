@@ -3,12 +3,12 @@ use strict;
 use warnings;
 use utf8;
 use 5.008001;
-use Furl::HTTP;
+
 use JSON ();
+use Furl::HTTP;
 use MIME::Base64;
 use ArangoDB::ConnectOptions;
 use ArangoDB::ServerException;
-
 use Class::Accessor::Lite ( ro => [qw/options/] );
 
 my $JSON = JSON->new->utf8;
@@ -21,11 +21,15 @@ sub new {
         push @$headers, Authorization =>
             sprintf( '%s %s', $opts->auth_type, encode_base64( $opts->auth_user . ':' . $opts->auth_passwd ) );
     }
-    my $furl = Furl::HTTP->new(
+    my %furl_args = (
         timeout => $opts->timeout,
         headers => $headers,
         proxy   => $opts->proxy,
     );
+    if( $opts->inet_aton ){
+        $furl_args{inet_aton} = $opts->inet_aton;
+    }
+    my $furl = Furl::HTTP->new(%furl_args);
 
     my $self = bless {
         options   => $opts,
@@ -41,8 +45,8 @@ sub new {
 }
 
 sub http_get {
-    my ( $self, $path ) = @_;
-    my $headers = $self->_build_headers();
+    my ( $self, $path, $additional_headers ) = @_;
+    my $headers = $self->_build_headers(undef, $additional_headers );
     my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
         %{ $self->{_req_args} },
         method     => 'GET',
@@ -53,22 +57,11 @@ sub http_get {
 }
 
 sub http_post {
-    my ( $self, $path, $data ) = @_;
-    $data = $JSON->encode( defined $data ? $data : {} );
-    my $headers = $self->_build_headers($data);
-    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
-        %{ $self->{_req_args} },
-        method     => 'POST',
-        path_query => $path,
-        headers    => $headers,
-        content    => $data,
-    );
-    return $self->_parse_response( $code, $msg, $body );
-}
-
-sub http_post_raw {
-    my ( $self, $path, $data ) = @_;
-    my $headers = $self->_build_headers($data);
+    my ( $self, $path, $data, $raw, $additional_headers ) = @_;
+    if( !$raw ){
+        $data = $JSON->encode( defined $data ? $data : {} );
+    }
+    my $headers = $self->_build_headers($data, $additional_headers);
     my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
         %{ $self->{_req_args} },
         method     => 'POST',
@@ -80,9 +73,11 @@ sub http_post_raw {
 }
 
 sub http_put {
-    my ( $self, $path, $data ) = @_;
-    $data = $JSON->encode( defined $data ? $data : {} );
-    my $headers = $self->_build_headers($data);
+    my ( $self, $path, $data, $raw, $additional_headers ) = @_;
+    if( !$raw ){
+        $data = $JSON->encode( defined $data ? $data : {} );
+    }
+    my $headers = $self->_build_headers($data, $additional_headers);
     my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
         %{ $self->{_req_args} },
         method     => 'PUT',
@@ -94,8 +89,8 @@ sub http_put {
 }
 
 sub http_delete {
-    my ( $self, $path ) = @_;
-    my $headers = $self->_build_headers();
+    my ( $self, $path, $additional_headers ) = @_;
+    my $headers = $self->_build_headers(undef, $additional_headers);
     my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
         %{ $self->{_req_args} },
         method     => 'DELETE',
@@ -106,11 +101,14 @@ sub http_delete {
 }
 
 sub _build_headers {
-    my ( $self, $body ) = @_;
+    my ( $self, $body, $additional_headers ) = @_;
     my $content_length = length( $body || q{} );
     my @headers = ();
     if ( $content_length > 0 ) {
         push @headers, 'Content-Type' => 'application/json';
+    }
+    if( $additional_headers ){
+        push @headers, @{ $additional_headers };
     }
     return \@headers;
 }
@@ -131,54 +129,3 @@ sub _parse_response {
 
 1;
 __END__
-
-=pod
-
-=head1 NAME
-
-ArangoDB::Connection - A connection to a ArangoDB server.
-
-=head1 DESCRIPTION
-
-The ArangoDB::Connection class creates a connection to the ArangoDB server.
-
-=head1 METHODS
-
-=head2 new($options)
-
-Constructor.
-$options if connection option.
-It is arguments of L<ArangoDB::ConnectOptions>.
-
-=head2 options
-
-Returns instance of L<ArangoDB::ConnectOptions>.
-
-=head2 http_get($path)
-
-Send GET HTTP request to $path.
-
-=head2 http_post($path,$data)
-
-Send POST HTTP request to $path with $data.
-$data is encoded to JSON.
-
-=head2 http_post_raw($path,$raw_data)
-
-Send POST HTTP request to $path with $raw_data.
-$raw_data isn't encoded to JSON.
-
-=head2 http_put($path,$data)
-
-Send PUT HTTP request to $path with $data.
-$data is encoded to JSON.
-
-=head2 http_delete($path)
-
-Send DELETE HTTP request to $path.
-
-=head1 AUTHOR
-
-Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
-=cut

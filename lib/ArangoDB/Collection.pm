@@ -408,7 +408,7 @@ sub bulk_import {
         unless $body && ref($body) eq 'ARRAY';
     my $api  = API_IMPORT . '?collection=' . $self->{id};
     my $data = join "\n", map { encode_json($_) } ( $header, @$body );
-    my $res  = eval { $self->{connection}->http_post_raw( $api, $data ); };
+    my $res  = eval { $self->{connection}->http_post( $api, $data, 1 ); };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
     }
@@ -438,7 +438,7 @@ sub bulk_import_self_contained {
         unless $documents && ref($documents) eq 'ARRAY';
     my $api  = API_IMPORT . '?type=documents&collection=' . $self->{id};
     my $data = join "\n", map { encode_json($_) } @$documents;
-    my $res  = eval { $self->{connection}->http_post_raw( $api, $data ); };
+    my $res  = eval { $self->{connection}->http_post( $api, $data , 1); };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
     }
@@ -1155,4 +1155,3 @@ __END__
 Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
 
 =cut
-

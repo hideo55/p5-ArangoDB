@@ -9,20 +9,24 @@ use ArangoDB::Collection;
 use ArangoDB::Document;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
-
 use overload '&{}' => sub {
-    my $self = shift;
-    return sub { $self->collection( $_[0] ) };
+        my $self = shift;
+        return sub { $self->collection( $_[0] ) };
     },
     fallback => 1;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 $VERSION = eval $VERSION;
 
 sub new {
     my ( $class, $options ) = @_;
     my $self = bless { connection => ArangoDB::Connection->new($options), }, $class;
     return $self;
+}
+
+sub collection {
+    my ( $self, $name ) = @_;
+    return $self->find($name) || $self->create($name);
 }
 
 sub create {
@@ -51,11 +55,6 @@ sub find {
         $self->_server_error_handler( $@, "Failed to get collection: $name", 1 );
     }
     return $collection;
-}
-
-sub collection {
-    my ( $self, $name ) = @_;
-    return $self->find($name) || $self->create($name);
 }
 
 sub collections {
@@ -97,11 +96,11 @@ ArangoDB - ArangoDB client for Perl.
 
   use ArangoDB;
   
-  my $db = ArangoDB->new({
+  my $db = ArangoDB->new(
       host       => 'localhost',
       port       => 8529,
       keep_alive => 1,
-  });
+  );
   
   # Find or create collection
   my $foo = $db->('foo');
@@ -182,7 +181,23 @@ Password for authentication
 
 Proxy url for HTTP connection.
 
+=item inet_aton
+
+A callback function to customize name resolution. Takes two arguments: ($hostname, $timeout_in_seconds).
+
+See L<Furl::HTTP>.
+
 =back
+
+=head2 collection($name)
+
+Get or create a collection based on $name. Returns instance of L<ArangoDB::Collection>.
+
+If the Collection $name does not exist, Create it.
+
+There is shorthand method for get collection instance.
+
+    my $collection = $db->('collection-name');
 
 =head2 create($name)
 
@@ -194,16 +209,6 @@ Get a Collection based on $name. Returns instance of L<ArangoDB::Collection>.
 
 If the collection does not exist, returns C<undef>. 
 
-=head2 collection($name)
-
-Get or create a Collection based on $name.
-
-If the Collection $name does not exist, Create it.
-
-There is shorthand method for get collection instance.
-
-    my $collection = $db->('collection-name');
-
 =head2 collections()
 
 Get all collections. Returns ARRAY reference.
@@ -211,6 +216,8 @@ Get all collections. Returns ARRAY reference.
 =head2 query($query)
 
 Get AQL statement handler. Returns instance of L<ArangoDB::Statement>.
+
+    my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
 
 =head1 AUTHOR
 

@@ -22,7 +22,7 @@ sub new {
     return $self;
 }
 
-for my $name (qw/host port timeout keep_alive proxy auth_type auth_user auth_passwd/) {
+for my $name (qw/host port timeout keep_alive proxy auth_type auth_user auth_passwd inet_aton/) {
     next if __PACKAGE__->can($name);
     no strict 'refs';
     *{ __PACKAGE__ . '::' . $name } = sub {
@@ -51,6 +51,7 @@ sub _validate {
 
     die "auth_user should be a string"   if $options->{auth_user}   && !is_string( $options->{auth_user} );
     die "auth_passwd should be a string" if $options->{auth_passwd} && !is_string( $options->{auth_passwd} );
+    die "inet_aton should be a CODE reference" if $options->{inet_aton} && !is_code_ref( $options->{inet_aton} );
 
 }
 
@@ -64,6 +65,7 @@ sub _get_defaults {
         auth_type   => undef,
         keep_alive  => 0,
         proxy       => undef,
+        inet_aton   => undef,
     };
 }
 
@@ -125,6 +127,12 @@ Password for authentication
 
 Proxy url for HTTP connection.
 
+=item inet_aton
+
+A callback function to customize name resolution. Takes two arguments: ($hostname, $timeout_in_seconds).
+
+See L<Furl::HTTP>.
+
 =back
 
 =head2 host()
@@ -142,6 +150,8 @@ Proxy url for HTTP connection.
 =head2 auth_passwd()
 
 =head2 proxy()
+
+=head2 inet_aton()
 
 =head1 AUTHOR
 

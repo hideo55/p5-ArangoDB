@@ -57,13 +57,19 @@ sub set {
 }
 
 sub fetch {
-    my $self = shift;
-    my $res = eval { $self->{connection}->http_get( $self->_api_path ) };
+    my ( $self, $no_etag ) = @_;
+    my @header;
+    if ( !$no_etag ) {
+        push @header, 'If-None-Match' => $self->{_rev};
+    }
+    my $res = eval { $self->{connection}->http_get( $self->_api_path, \@header ) };
     if ($@) {
         $self->_server_error_handler( $@, 'fetch' );
     }
-    $self->{_rev} = delete $res->{_rev};
-    $self->{document} = { map { $_ => $res->{$_} } grep { $_ !~ /^_/ } keys %$res };
+    if ( !defined $res || ref($res) eq 'HASH' ) {
+        $self->{_rev} = delete $res->{_rev};
+        $self->{document} = { map { $_ => $res->{$_} } grep { $_ !~ /^_/ } keys %$res };
+    }
     return $self;
 }
 
@@ -73,7 +79,7 @@ sub save {
     if ($@) {
         $self->_server_error_handler( $@, 'update' );
     }
-    $self->fetch();
+    $self->fetch(1);
     return $self;
 }
 

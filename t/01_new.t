@@ -11,14 +11,19 @@ my $db = ArangoDB->new(
         use_proxy   => 1,
         auth_type   => 'Basic',
         auth_user   => 'tesuser',
-        auth_passwd => 'testuserpw'
+        auth_passwd => 'testuserpw',
+        inet_aton   => sub { },
     }
 );
 
 isa_ok( $db, "ArangoDB" );
 ok exception { $db->find('foo') };
 
-like exception{
+lives_ok {
+    ArangoDB->new();  
+};
+
+like exception {
     ArangoDB->new('foo');
 }, qr/^Argument must be HASH reference/;
 
@@ -111,5 +116,12 @@ like exception {
         }
     );
 }, qr/^auth_passwd should be a string/;
+
+like exception {
+    ArangoDB->new(
+        {   'inet_aton' => {},
+        }
+    );
+}, qr/^inet_aton should be a CODE reference/;
 
 done_testing;

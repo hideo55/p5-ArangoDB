@@ -1,6 +1,10 @@
 Revision history for Perl extension ArangoDB
 
-0.03    Wed Oct 17 2:35:00 2012
+0.04    Thu Oct 18 02:00:00 2012
+        - Add inet_aton option
+        - Fixed deps
+
+0.03    Wed Oct 17 02:35:00 2012
         - Switch HTTP client Furl to Furl::HTTP
 
 0.02    Tue Oct 16 21:05:00 2012
@@ -16,7 +20,7 @@ Revision history for Perl extension ArangoDB
         - Change API(Document/Edge/Index)
         - Improved documents
 
-0.01_02 Fri Oct 12 2:47:00 2012
+0.01_02 Fri Oct 12 02:47:00 2012
         - dev release version
 
 0.01_01 Tue Jul  3 22:33:37 2012

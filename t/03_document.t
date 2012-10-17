@@ -118,7 +118,7 @@ subtest 'bulk import - header' => sub {
     like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
-                http_post_raw => sub {die}
+                http_post => sub {die}
             }
         );
         $db->collection('di')->bulk_import( [qw/fistsName lastName age gender/],
@@ -153,7 +153,7 @@ subtest 'bulk import - self-contained' => sub {
     like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
-                http_post_raw => sub {die}
+                http_post => sub {die}
             }
         );
         $db->collection('di')

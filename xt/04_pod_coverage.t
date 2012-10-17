@@ -7,6 +7,7 @@ my %INNER_CLASSES = map { $_ => 1 } qw/
     ArangoDB::AbstractDocument
     ArangoDB::BindVars
     ArangoDB::ClientException
+    ArangoDB::Connection
     ArangoDB::Constants
     ArangoDB::Index
     ArangoDB::ServerException/;

@@ -117,10 +117,10 @@ ArangoDB::Statement - ArangoDB AQL handler
 
     use ArangoDB;
     
-    my $db = ArangoDB->new({
+    my $db = ArangoDB->new(
         host => 'localhost',
         port => 8529,
-    });
+    );
   
     my $sth = $db->query('FOR u IN users FILTER u.active == true RETURN u');
     my $cursor = $sth->execute({ 
