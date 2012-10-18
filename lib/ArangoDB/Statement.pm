@@ -138,7 +138,7 @@ ArangoDB::Statement - An ArangoDB AQL handler
 
 =head1 DESCRIPTION
 
-An AQL(Arango Query Language) statement handler.
+An AQL(ArangoDB Query Language) statement handler.
 
 =head1 METHODS
 
