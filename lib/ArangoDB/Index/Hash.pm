@@ -32,14 +32,11 @@ Returns identifier of index.
 =head2 type()
 
 Returns type of index.
+This method will return 'hash'.
 
 =head2 collection_id()
 
 Returns identifier of the index.
-
-=head2 drop()
-
-Drop the index.
 
 =head2 fields()
 
@@ -48,6 +45,10 @@ List of attribute paths.
 =head2 unique()
 
 If it is true, it is a unique index.
+
+=head2 drop()
+
+Drop the index.
 
 =head1 AUTHOR
 

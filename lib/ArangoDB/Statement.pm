@@ -111,7 +111,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Statement - ArangoDB AQL handler
+ArangoDB::Statement - An ArangoDB AQL handler
 
 =head1 SYNOPSIS
 

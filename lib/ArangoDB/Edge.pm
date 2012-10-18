@@ -85,6 +85,8 @@ Save the changes of edge to database.
 
 Delete the edge from database.
 
+$with_rev_check is boolean flag. If it's true, the ArangoDB checks that the revision of the edge. If there is a conflict, this method raise a error.
+
 =head2 from()
 
 Returns document id that start of the edge.

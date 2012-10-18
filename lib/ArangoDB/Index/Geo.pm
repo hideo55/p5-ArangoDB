@@ -32,14 +32,23 @@ Returns identifier of index.
 =head2 type()
 
 Returns type of index.
+This method will return 'geo1' or 'geo2'.
+
+=over 4
+
+=item geo1
+
+A geo index with one field. The value of the field is a list of two double values(latitude and longitude).
+
+=item geo2
+
+A geo index with two fields(latitude and longitude).
+
+=back
 
 =head2 collection_id()
 
 Returns identifier of the index.
-
-=head2 drop()
-
-Drop the index.
 
 =head2 fields()
 
@@ -52,6 +61,10 @@ If it is true, This geo-spatial index is using geojson format.
 =head2 constraint()
 
 If it is true, this index is geo-spatial constraint.
+
+=head2 drop()
+
+Drop the index.
 
 =head1 AUTHOR
 

@@ -32,18 +32,19 @@ Returns identifier of index.
 =head2 type()
 
 Returns type of index.
+This method will return 'primary'.
 
 =head2 collection_id()
 
 Returns identifier of the index.
 
-=head2 drop()
-
-Drop the index.
-
 =head2 fields()
 
 List of attribure paths.
+
+=head2 drop()
+
+Drop the index.
 
 =head1 AUTHOR
 

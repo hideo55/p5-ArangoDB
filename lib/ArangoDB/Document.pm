@@ -102,9 +102,11 @@ Update the value of an attribute (Does not write to database)
 
 Fetch the document data from database.
 
-=head2 save()
+=head2 save($with_rev_check)
 
 Save the changes of document to database.
+
+$with_rev_check is boolean flag. If it's true, the ArangoDB checks that the revision of the document. If there is a conflict, this method raise a error.
 
 =head2 delete()
 

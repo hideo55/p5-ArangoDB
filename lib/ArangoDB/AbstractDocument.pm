@@ -54,6 +54,7 @@ sub get {
 sub set {
     my ( $self, $attr_name, $value ) = @_;
     $self->{document}{$attr_name} = $value;
+    return $self;
 }
 
 sub fetch {
@@ -74,8 +75,14 @@ sub fetch {
 }
 
 sub save {
-    my $self = shift;
-    eval { $self->{connection}->http_put( $self->_api_path, $self->content ); };
+    my ( $self, $with_rev_check ) = @_;
+    eval {
+        my $rev
+            = $with_rev_check
+            ? '?rev=' . $self->{_rev}
+            : q{};
+        $self->{connection}->http_put( $self->_api_path . $rev, $self->content );
+    };
     if ($@) {
         $self->_server_error_handler( $@, 'update' );
     }

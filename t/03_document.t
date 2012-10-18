@@ -87,6 +87,17 @@ subtest 'Update document' => sub {
     $doc2->fetch;
     is_deeply $doc2->content, $doc1->content;
 
+    lives_ok {
+        $doc1->set( baz => 'qux' )->save(1);
+    };
+    like exception {
+        $doc2->set( foo => 1 )->save(1);
+
+    }, qr/Failed to update the document\(.+?\)\:precondition failed/;
+    lives_ok {
+        $doc2->fetch->set( foo => 1 )->save(1);
+    };
+
     like exception {
         my $guard = mock_guard(
             'ArangoDB::Connection' => {
@@ -126,19 +137,19 @@ subtest 'bulk import - header' => sub {
     }, qr/^Failed to bulk import to the collection/;
 
     like exception {
-        $db->collection('di')->bulk_import({});
+        $db->collection('di')->bulk_import( {} );
     }, qr/^1st parameter must be ARRAY reference/;
-    
+
     like exception {
         $db->collection('di')->bulk_import();
     }, qr/^1st parameter must be ARRAY reference/;
-    
+
     like exception {
-        $db->collection('di')->bulk_import([]);
+        $db->collection('di')->bulk_import( [] );
     }, qr/^2nd parameter must be ARRAY reference/;
-    
+
     like exception {
-        $db->collection('di')->bulk_import([],{});
+        $db->collection('di')->bulk_import( [], {} );
     }, qr/^2nd parameter must be ARRAY reference/;
 
 };
@@ -159,13 +170,13 @@ subtest 'bulk import - self-contained' => sub {
         $db->collection('di')
             ->bulk_import_self_contained( [ { name => 'foo', age => 20 }, { type => 'bar', count => 100 }, ] );
     }, qr/^Failed to bulk import to the collection/;
-    
+
     like exception {
         $db->collection('di')->bulk_import_self_contained();
     }, qr/^Parameter must be ARRAY reference/;
 
     like exception {
-        $db->collection('di')->bulk_import_self_contained({});
+        $db->collection('di')->bulk_import_self_contained( {} );
     }, qr/^Parameter must be ARRAY reference/;
 };
 

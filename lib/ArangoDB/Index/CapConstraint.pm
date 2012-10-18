@@ -32,18 +32,19 @@ Returns identifier of index.
 =head2 type()
 
 Returns type of index.
+This method will return 'cap'.
 
 =head2 collection_id()
 
 Returns identifier of the index.
 
-=head2 drop()
-
-Drop the index.
-
 =head2 size()
 
 Restriction size of collection.
+
+=head2 drop()
+
+Drop the index.
 
 =head1 AUTHOR
 

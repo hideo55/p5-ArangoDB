@@ -111,7 +111,7 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Cursor - An ArangoDB cursor
+ArangoDB::Cursor - An ArangoDB Query Cursor hanlder
 
 =head1 SYNOPSIS
 
@@ -123,7 +123,7 @@ ArangoDB::Cursor - An ArangoDB cursor
 
 =head1 DESCRIPTION
 
-Instance of ArandoDB Cursor.
+Instance of ArandoDB Query Cursor.
 
 =head1 METHODS
 
