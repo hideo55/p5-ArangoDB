@@ -15,7 +15,7 @@ use overload '&{}' => sub {
     },
     fallback => 1;
 
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 $VERSION = eval $VERSION;
 
 sub new {
@@ -127,7 +127,7 @@ ArangoDB - ArangoDB client for Perl
 
 =head1 DESCRIPTION
 
-This module is an ArangoDB client for Perl.
+This module is an ArangoDB's REST API client for Perl.
 
 ArangoDB is a universal open-source database with a flexible data model for documents, graphs, and key-values.
 

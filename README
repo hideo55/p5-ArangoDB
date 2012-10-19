@@ -1,5 +1,5 @@
 NAME
-    ArangoDB - ArangoDB client for Perl.
+    ArangoDB - ArangoDB client for Perl
 
 SYNOPSIS
       use ArangoDB;
@@ -34,7 +34,12 @@ SYNOPSIS
       my $docs = $cursor2->all;
 
 DESCRIPTION
-    ArangoDB is ArangoDB client for Perl.
+    This module is an ArangoDB's REST API client for Perl.
+
+    ArangoDB is a universal open-source database with a flexible data model
+    for documents, graphs, and key-values.
+
+    More information: <http://www.arangodb.org/>
 
 SUPPORT API VERSION
     This supports ArangoDB API implementation 1.01.
@@ -108,11 +113,15 @@ METHODS
 
         my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
 
-AUTHOR
-    Hideaki Ohno <hide.o.j55 {at} gmail.com>
-
 SEE ALSO
     ArangoDB websie <http://www.arangodb.org/>
+
+DEVELOPMENT
+  Repository
+    <https://github.com/hideo55/p5-ArangoDB>
+
+AUTHOR
+    Hideaki Ohno <hide.o.j55 {at} gmail.com>
 
 LICENSE
     This library is free software; you can redistribute it and/or modify it

@@ -1,5 +1,9 @@
 Revision history for Perl extension ArangoDB
 
+0.05    Sat Oct 20 02:30:00 2012
+        - Add document revision check option
+        - Improved documents
+
 0.04    Thu Oct 18 02:00:00 2012
         - Add inet_aton option
         - Fixed deps
