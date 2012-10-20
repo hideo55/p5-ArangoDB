@@ -163,6 +163,8 @@ Default: 8529
 
 Seconds of HTTP connection timeout.
 
+Default: 300
+
 =item keep_alive
 
 If it is true, use HTTP Keep-Alive connection.

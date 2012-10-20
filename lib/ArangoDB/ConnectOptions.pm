@@ -49,9 +49,9 @@ sub _validate {
         die sprintf( "unsupported auth_type value '%s'", $options->{auth_type} );
     }
 
-    die "auth_user should be a string"   if $options->{auth_user}   && !is_string( $options->{auth_user} );
-    die "auth_passwd should be a string" if $options->{auth_passwd} && !is_string( $options->{auth_passwd} );
-    die "inet_aton should be a CODE reference" if $options->{inet_aton} && !is_code_ref( $options->{inet_aton} );
+    die "auth_user should be a string"         if $options->{auth_user}   && !is_string( $options->{auth_user} );
+    die "auth_passwd should be a string"       if $options->{auth_passwd} && !is_string( $options->{auth_passwd} );
+    die "inet_aton should be a CODE reference" if $options->{inet_aton}   && !is_code_ref( $options->{inet_aton} );
 
 }
 
@@ -59,7 +59,7 @@ sub _get_defaults {
     return {
         host        => 'localhost',
         port        => 8529,
-        timeout     => 5,
+        timeout     => 300,           # Same value as default timeout of arangosh
         auth_user   => undef,
         auth_passwd => undef,
         auth_type   => undef,
