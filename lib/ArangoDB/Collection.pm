@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use utf8;
 use 5.008001;
-use JSON;
+use JSON ();
 use Carp qw(croak);
 use Scalar::Util qw(weaken);
 use Class::Accessor::Lite ( ro => [qw/id status/], );
@@ -20,6 +20,8 @@ use ArangoDB::ClientException;
 use overload
     q{""}    => sub { shift->id },
     fallback => 1;
+
+my $JSON = JSON->new->utf8;
 
 =pod
 
@@ -407,7 +409,7 @@ sub bulk_import {
     croak( ArangoDB::ClientException->new('2nd parameter must be ARRAY reference.') )
         unless $body && ref($body) eq 'ARRAY';
     my $api  = API_IMPORT . '?collection=' . $self->{id};
-    my $data = join "\n", map { encode_json($_) } ( $header, @$body );
+    my $data = join "\n", map { $JSON->encode($_) } ( $header, @$body );
     my $res  = eval { $self->{connection}->http_post( $api, $data, 1 ); };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
@@ -437,7 +439,7 @@ sub bulk_import_self_contained {
     croak( ArangoDB::ClientException->new('Parameter must be ARRAY reference.') )
         unless $documents && ref($documents) eq 'ARRAY';
     my $api  = API_IMPORT . '?type=documents&collection=' . $self->{id};
-    my $data = join "\n", map { encode_json($_) } @$documents;
+    my $data = join "\n", map { $JSON->encode($_) } @$documents;
     my $res  = eval { $self->{connection}->http_post( $api, $data , 1); };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
