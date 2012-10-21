@@ -1,5 +1,8 @@
 Revision history for Perl extension ArangoDB
 
+0.07    Mon Oct 22 03:20:00 2012
+        - Optimize JSON encoding
+
 0.06    Sun Oct 21 20:05:00 2012
         - Change default timeout value
 
