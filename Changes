@@ -1,5 +1,8 @@
 Revision history for Perl extension ArangoDB
 
+0.06    Sun Oct 21 20:05:00 2012
+        - Change default timeout value
+
 0.05    Sat Oct 20 02:30:00 2012
         - Add document revision check option
         - Improved documents

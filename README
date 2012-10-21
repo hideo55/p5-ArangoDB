@@ -63,6 +63,8 @@ METHODS
     timeout
         Seconds of HTTP connection timeout.
 
+        Default: 300
+
     keep_alive
         If it is true, use HTTP Keep-Alive connection.
 
