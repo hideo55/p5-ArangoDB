@@ -2,15 +2,13 @@ use strict;
 use warnings FATAL => 'all';
 use Module::Build;
 
-my $class = Module::Build->subclass(
-    code  => <<'END_OF_CODE',);
+my $class = Module::Build->subclass( code  => <<'END_OF_CODE' );
 sub ACTION_test {
     my $self = shift;
     require App::Prove;
     my $prove = App::Prove->new();
     my @args = qw(--lib -Pt::lib::Prove::Plugin::StartArangoDB);
-    push @args, @{$self->{properties}{test_files}};
-    $prove->process_args(@args);
+    $prove->process_args(@args, @{$self->{properties}{test_files}});
     $prove->run();
 }
 END_OF_CODE
