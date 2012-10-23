@@ -3,9 +3,7 @@ use warnings FATAL => 'all';
 use Module::Build;
 
 my $class = Module::Build->subclass(
-    class => 'Module::Build::ArangoDB',
-    code  => <<'END_OF_CODE',
-    
+    code  => <<'END_OF_CODE',);
 sub ACTION_test {
     my $self = shift;
     require App::Prove;
@@ -15,11 +13,9 @@ sub ACTION_test {
     $prove->process_args(@args);
     $prove->run();
 }
-
 END_OF_CODE
-);
 
-my $build = $class->new(
+$class->new(
     name                 => 'ArangoDB',
     module_name          => 'ArangoDB',
     dist_author          => 'Hideaki Ohno<hide.o.j55@gmail.com>',
@@ -60,5 +56,4 @@ my $build = $class->new(
             bugtracker => 'https://github.com/hideo55/p5-ArangoDB/issues',
         },
     },
-);
-$build->create_build_script();
+)->create_build_script();
