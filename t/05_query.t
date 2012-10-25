@@ -113,9 +113,9 @@ subtest 'batch query' => sub {
     my $db  = ArangoDB->new($config);
     my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.age ASC RETURN u');
     $sth->bind( age => 10 );
-    my $cur = $sth->execute( { batch_size => 2, do_count => 1 } );
+    my $cur = $sth->execute( { batch_size => 1, do_count => 1 } );
     is $cur->count,  3;
-    is $cur->length, 2;
+    is $cur->length, 1;
     my @docs;
     while ( my $doc = $cur->next() ) {
         push @docs, $doc->content;
@@ -199,8 +199,9 @@ subtest 'cursor' => sub {
     );
     my $doc = $cur->next;
     isa_ok $doc, 'ArangoDB::Document';
-    $cur->next;
-
+    
+    like exception{ $cur->next }, qr/^Invalid argument for ArangoDB\:\:Document/;
+    
     pass();
 };
 

@@ -11,6 +11,7 @@ use overload
 
 sub new {
     my ( $class, $conn, $doc ) = @_;
+    die "Invalid argument for $class : undef" unless defined $doc;
     my $self = bless { connection => $conn, }, $class;
     weaken( $self->{connection} );
     my $id  = CORE::delete $doc->{_id};

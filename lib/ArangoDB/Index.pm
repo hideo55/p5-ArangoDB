@@ -17,13 +17,13 @@ sub new {
     my $self = bless { %$params, connection => $conn, }, $class;
     weaken( $self->{connection} );
     $self->{collection_id} = ( split '/', $self->{id} )[0];
+    $self->{_api_path} = API_INDEX . '/' . $self->{id};
     return $self;
 }
 
 sub drop {
     my $self = shift;
-    my $api  = API_INDEX . '/' . $self->{id};
-    my $res  = eval { $self->{connection}->http_delete($api) };
+    my $res = eval { $self->{connection}->http_delete( $self->{_api_path} ) };
     if ($@) {
         $self->_server_error_handler( $@, 'drop' );
     }

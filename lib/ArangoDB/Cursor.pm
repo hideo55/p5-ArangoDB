@@ -45,6 +45,9 @@ sub new {
         position   => 0,
         result     => $cursor->{result} || [],
     }, $class;
+    if ( $self->{id} ) {
+        $self->{_api_path} = API_CURSOR . '/' . $self->{id};
+    }
     weaken( $self->{connection} );
     return $self;
 }
@@ -61,7 +64,7 @@ sub all {
     my $self = shift;
     my @result;
     while ( !@result || $self->_get_next_batch() ) {
-        my $last = $self->{length} -1;
+        my $last = $self->{length} - 1;
         push @result, ( @{ $self->{result} } )[ 0 .. $last ];
     }
     my $conn = $self->{connection};
@@ -72,8 +75,7 @@ sub _get_next_batch {
     my $self = shift;
     return unless $self->{has_more};
     eval {
-        my $res = $self->{connection}->http_put( API_CURSOR . '/' . $self->id, {} );
-        $self->{id}       = $res->{id};
+        my $res = $self->{connection}->http_put( $self->{_api_path}, {} );
         $self->{has_more} = $res->{hasMore};
         $self->{length}   = scalar( @{ $res->{result} } );
         $self->{result}   = $res->{result};
@@ -87,8 +89,7 @@ sub _get_next_batch {
 
 sub delete {
     my $self = shift;
-    my $api  = API_CURSOR . '/' . $self->id;
-    eval { $self->{connection}->http_delete($api) };
+    eval { $self->{connection}->http_delete( $self->{_api_path} ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to delete cursor(%d)' );
     }

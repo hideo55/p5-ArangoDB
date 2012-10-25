@@ -10,8 +10,8 @@ use ArangoDB::Document;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
 use overload '&{}' => sub {
-        my $self = shift;
-        return sub { $self->collection( $_[0] ) };
+    my $self = shift;
+    return sub { $self->collection( $_[0] ) };
     },
     fallback => 1;
 
@@ -36,7 +36,7 @@ sub create {
     my $coll;
     eval {
         my $res = $self->{connection}->http_post( API_COLLECTION, $params );
-        $coll = ArangoDB::Collection->new( $self->{connection}, $res );
+        $coll = ArangoDB::Collection->new( $self, $res );
     };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to create collection($name)" );
@@ -49,7 +49,7 @@ sub find {
     my $api        = API_COLLECTION . '/' . $name;
     my $collection = eval {
         my $res = $self->{connection}->http_get($api);
-        ArangoDB::Collection->new( $self->{connection}, $res );
+        ArangoDB::Collection->new( $self, $res );
     };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to get collection: $name", 1 );
@@ -59,11 +59,10 @@ sub find {
 
 sub collections {
     my $self = shift;
-    my $conn = $self->{connection};
     my @colls;
     eval {
-        my $res = $conn->http_get(API_COLLECTION);
-        @colls = map { ArangoDB::Collection->new( $conn, $_ ) } @{ $res->{collections} };
+        my $res = $self->{connection}->http_get(API_COLLECTION);
+        @colls = map { ArangoDB::Collection->new( $self, $_ ) } @{ $res->{collections} };
     };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get collections' );
@@ -76,6 +75,42 @@ sub query {
     return ArangoDB::Statement->new( $self->{connection}, $query );
 }
 
+sub document {
+    my ( $self, $doc ) = @_;
+    $doc = $doc || q{};
+    my $api = API_DOCUMENT . '/' . $doc;
+    my $res = eval { $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, "Failed to get the document($doc) in the collection(%s)" );
+    }
+    return ArangoDB::Document->new( $self->{connection}, $res );
+}
+
+sub edge {
+    my ( $self, $edge ) = @_;
+    $edge = $edge || q{};
+    my $api = API_EDGE . '/' . $edge;
+    my $res = eval { $self->{connection}->http_get($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, "Failed to get the edge($edge) in the collection(%s)" );
+    }
+    return ArangoDB::Edge->new( $self->{connection}, $res );
+}
+
+sub index {
+    my ( $self, $index_id ) = @_;
+    $index_id = defined $index_id ? $index_id : q{};
+    my $api   = API_INDEX . '/' . $index_id;
+    my $index = eval {
+        my $res = $self->{connection}->http_get($api);
+        $self->_get_index_instance($res);
+    };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+    }
+    return $index;
+}
+
 sub _server_error_handler {
     my ( $self, $error, $message, $ignore_404 ) = @_;
     if ( ref($error) && $error->isa('ArangoDB::ServerException') ) {
@@ -83,6 +118,10 @@ sub _server_error_handler {
         $message .= ':' . ( $error->detail->{errorMessage} || q{} );
     }
     croak $message;
+}
+
+BEGIN {
+    *_get_index_instance = \&ArangoDB::Collection::_get_index_instance;
 }
 
 1;
@@ -225,6 +264,33 @@ Get AQL statement handler. Returns instance of L<ArangoDB::Statement>.
 
     my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
 
+=head2 document($doc)
+
+Get documnet in the collection based on $doc. Returns instance of L<ArangoDB::Document>.
+
+=head2 edge($edge)
+
+Get edge in the collection. Returns instance of L<ArangoDB::Edge>.
+
+=head2 index($index_id)
+
+Returns index object.(ArangoDB::Index::*)
+
+See:
+
+=over 4
+
+=item * L<ArangoDB::Index::Primary>
+
+=item * L<ArangoDB::Index::Hash>
+
+=item * L<ArangoDB::Index::SkipList>
+
+=item * L<ArangoDB::Index::Geo>
+
+=item * L<ArangoDB::Index::CapConstraint>
+
+=back
 
 =head1 SEE ALSO
 

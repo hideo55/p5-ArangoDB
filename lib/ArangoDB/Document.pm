@@ -8,6 +8,13 @@ use parent 'ArangoDB::AbstractDocument';
 use ArangoDB::Constants qw(:api);
 use ArangoDB::Edge;
 
+sub new {
+    my $class = shift;
+    my $self  = $class->SUPER::new(@_);
+    $self->{_api_path} = API_DOCUMENT . '/' . $self;
+    return $self;
+}
+
 sub any_edges {
     my ( $self, $vertex ) = @_;
     return $self->_get_edges('any');
@@ -24,8 +31,7 @@ sub out_edges {
 }
 
 sub _api_path {
-    my $self = shift;
-    return API_DOCUMENT . '/' . $self;
+    $_[0]->{_api_path};
 }
 
 sub _get_edges {

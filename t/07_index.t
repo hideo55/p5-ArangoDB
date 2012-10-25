@@ -142,7 +142,7 @@ subtest 'geo constraint' => sub {
     is $index->type, 'geo1';
     is_deeply $index->fields, [qw/loc/];
 
-    my $index2 = $coll->get_index($index);
+    my $index2 = $db->index($index);
     isa_ok $index2, 'ArangoDB::Index::Geo';
 
     like exception {
@@ -161,7 +161,7 @@ subtest 'CAP constraint' => sub {
     }
     is $coll->count, 10;
 
-    my $cap2 = $coll->get_index($cap);
+    my $cap2 = $db->index($cap);
     isa_ok $cap2, 'ArangoDB::Index::CapConstraint';
 
     like exception { $coll->ensure_cap_constraint('x') }, qr/^Failed to create cap constraint on the collection/;
@@ -175,7 +175,7 @@ subtest 'get indexes' => sub {
     $coll->ensure_hash_index( [qw/foo/] );
     $coll->ensure_skiplist(   [qw/bar/] );
 
-    my $indexes = $coll->indexes();
+    my $indexes = $coll->get_indexes();
 
     is scalar @$indexes, 3;    # primary + 2
     ok !grep { !$_->isa('ArangoDB::Index') } @$indexes;
@@ -186,7 +186,7 @@ subtest 'get indexes' => sub {
                 http_get => sub {die}
             }
         );
-        $coll->indexes();
+        $coll->get_indexes();
     }, qr/^Failed to get the index/;
 
 };
@@ -195,11 +195,11 @@ subtest 'get index' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test9');
 
-    my $index = $coll->get_index( $coll . '/0' );
+    my $index = $db->index( $coll . '/0' );
     isa_ok $index, 'ArangoDB::Index::Primary';
     is $index->fields->[0], '_id';
 
-    like exception { $coll->get_index() }, qr/^Failed to get the index/;
+    like exception { $db->index() }, qr/^Failed to get the index/;
 };
 
 subtest 'unknown index' => sub {
@@ -214,7 +214,7 @@ subtest 'unknown index' => sub {
                     }
             }
         );
-        $coll->get_index();
+        $db->index();
     }, qr/Unknown index type\(foo\)/;
 
     like exception {
@@ -225,7 +225,7 @@ subtest 'unknown index' => sub {
                     }
             }
         );
-        $coll->get_index();
+        $db->index();
     }, qr/Unknown index type\(\)/;
 };
 
@@ -236,7 +236,7 @@ subtest 'Drop index' => sub {
     my $index = $coll->ensure_hash_index( [qw/foo/] );
     $index->drop();
 
-    ok exception { $db->get_index($index) };
+    ok exception { $db->index($index) };
 
     like exception { $index->drop() }, qr/^Failed to drop the index/;
 

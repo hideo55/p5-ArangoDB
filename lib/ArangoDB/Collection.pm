@@ -42,12 +42,14 @@ Constructor.
 =cut
 
 sub new {
-    my ( $class, $conn, $raw_collection ) = @_;
-    my $self = bless { connection => $conn, }, $class;
+    my ( $class, $db, $raw_collection ) = @_;
+    my $self = bless { db => $db, connection => $db->{connection}, }, $class;
+    weaken( $self->{db} );
     weaken( $self->{connection} );
     for my $key (qw/id name status/) {
         $self->{$key} = $raw_collection->{$key};
     }
+    $self->{_api_path} = API_COLLECTION . '/' . $self->{id};
     return $self;
 }
 
@@ -105,7 +107,7 @@ Drop the collection.
 
 sub drop {
     my $self = shift;
-    my $api  = API_COLLECTION . '/' . $self->{id};
+    my $api  = $self->{_api_path};
     eval { $self->{connection}->http_delete($api); };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to drop the collection(%s)' );
@@ -332,25 +334,6 @@ sub wait_for_sync {
 
 =head1 METHODS FOR DOCUMENT HANDLING
 
-=head2 document($doc)
-
-Get documnet in the collection based on $doc. Returns instance of L<ArangoDB::Document>.
-
-=cut
-
-sub document {
-    my ( $self, $doc ) = @_;
-    $doc = $doc || q{};
-    my $api = API_DOCUMENT . '/' . $doc;
-    my $res = eval { $self->{connection}->http_get($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to get the document($doc) in the collection(%s)" );
-    }
-    return ArangoDB::Document->new( $self->{connection}, $res );
-}
-
-=pod
-
 =head2 save($data)
 
 Save document to the collection. Returns instance of L<ArangoDB::Document>.
@@ -410,7 +393,7 @@ sub bulk_import {
         unless $body && ref($body) eq 'ARRAY';
     my $api  = API_IMPORT . '?collection=' . $self->{id};
     my $data = join "\n", map { $JSON->encode($_) } ( $header, @$body );
-    my $res  = eval { $self->{connection}->http_post( $api, $data, 1 ); };
+    my $res  = eval { $self->{connection}->http_post( $api, $data, 1 ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
     }
@@ -440,7 +423,7 @@ sub bulk_import_self_contained {
         unless $documents && ref($documents) eq 'ARRAY';
     my $api  = API_IMPORT . '?type=documents&collection=' . $self->{id};
     my $data = join "\n", map { $JSON->encode($_) } @$documents;
-    my $res  = eval { $self->{connection}->http_post( $api, $data , 1); };
+    my $res  = eval { $self->{connection}->http_post( $api, $data, 1 ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to bulk import to the collection(%s)' );
     }
@@ -450,25 +433,6 @@ sub bulk_import_self_contained {
 =pod
 
 =head1 METHODS FOR EDGE HANDLING
-
-=head2 edge($edge)
-
-Get edge in the collection. Returns instance of L<ArangoDB::Edge>.
-
-=cut
-
-sub edge {
-    my ( $self, $edge ) = @_;
-    $edge = $edge || q{};
-    my $api = API_EDGE . '/' . $edge;
-    my $res = eval { $self->{connection}->http_get($api) };
-    if ($@) {
-        $self->_server_error_handler( $@, "Failed to get the edge($edge) in the collection(%s)" );
-    }
-    return ArangoDB::Edge->new( $self->{connection}, $res );
-}
-
-=pod
 
 =head2 save_edge($from,$to[,$data])
 
@@ -499,7 +463,7 @@ sub save_edge {
     my $api  = API_EDGE . '?collection=' . $self->{id} . '&from=' . $from . '&to=' . $to;
     my $edge = eval {
         my $res = $self->{connection}->http_post( $api, $data );
-        $self->edge( $res->{_id} );
+        $self->{db}->edge( $res->{_id} );
     };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to save the new edge to the collection(%s)" );
@@ -1029,51 +993,13 @@ sub ensure_cap_constraint {
 
 =pod
 
-=head2 get_index($index_id)
-
-Returns index object.(ArangoDB::Index::*)
-
-See:
-
-=over 4
-
-=item * L<ArangoDB::Index::Primary>
-
-=item * L<ArangoDB::Index::Hash>
-
-=item * L<ArangoDB::Index::SkipList>
-
-=item * L<ArangoDB::Index::Geo>
-
-=item * L<ArangoDB::Index::CapConstraint>
-
-=back
-
-=cut
-
-sub get_index {
-    my ( $self, $index_id ) = @_;
-    $index_id = defined $index_id ? $index_id : q{};
-    my $api   = API_INDEX . '/' . $index_id;
-    my $index = eval {
-        my $res = $self->{connection}->http_get($api);
-        $self->_get_index_instance($res);
-    };
-    if ($@) {
-        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
-    }
-    return $index;
-}
-
-=pod
-
-=head2 indexes()
+=head2 get_indexes()
 
 Returns list of indexes of the collection.
 
 =cut
 
-sub indexes {
+sub get_indexes {
     my $self    = shift;
     my $api     = API_INDEX . '?collection=' . $self->{id};
     my @indexes = eval {
@@ -1089,7 +1015,7 @@ sub indexes {
 # Get property of the collection.
 sub _get_from_this {
     my ( $self, $path ) = @_;
-    my $api = API_COLLECTION . '/' . $self->{id} . '/' . $path;
+    my $api = $self->{_api_path} . '/' . $path;
     my $res = eval { $self->{connection}->http_get($api) };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to get the property($path) of the collection(%s)" );
@@ -1100,7 +1026,7 @@ sub _get_from_this {
 # Set property of the collection.
 sub _put_to_this {
     my ( $self, $path, $params ) = @_;
-    my $api = API_COLLECTION . '/' . $self->{id} . '/' . $path;
+    my $api = $self->{_api_path} . '/' . $path;
     my $res = eval { $self->{connection}->http_put( $api, $params ) };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to update the property($path) of the collection(%s)" );

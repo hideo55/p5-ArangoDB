@@ -34,7 +34,7 @@ subtest 'create edge' => sub {
     my $edge1 = $coll->save_edge( $doc1, $doc2, { foo => 1 } );
     is $edge1->from, $doc1->document_handle;
     is $edge1->to,   $doc2->document_handle;
-    my $edge2 = $coll->edge($edge1);
+    my $edge2 = $db->edge($edge1);
     is_deeply( $edge1, $edge2 );
 
     my $edge3 = $coll->save_edge( $doc1, $doc2 );
@@ -64,9 +64,9 @@ subtest 'get edges' => sub {
     $coll->save_edge( $doc2, $doc1, { e => 4 } );
     $coll->save_edge( $doc3, $doc1, { e => 4 } );
 
-    my $e1_1 = $coll->edge($e1);
+    my $e1_1 = $db->edge($e1);
     is_deeply $e1_1, $e1;
-    like exception { $coll->edge() }, qr/^Failed to get the edge/;
+    like exception { $db->edge() }, qr/^Failed to get the edge/;
 
     my $edges = $doc1->any_edges();
     ok !grep { !$_->isa('ArangoDB::Edge') } @$edges;
@@ -112,7 +112,7 @@ subtest 'Update edge' => sub {
     my $edge = $doc->in_edges($doc)->[0];
     $edge->set( e => '2-2' );
     $edge->save();
-    my $new_edge = $coll->edge($edge);
+    my $new_edge = $db->edge($edge);
     is_deeply $new_edge->content, { e => '2-2' };
 
     like exception {

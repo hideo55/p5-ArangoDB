@@ -24,9 +24,8 @@ sub init {
 }
 
 subtest 'Failed to get document' => sub {
-    my $db   = ArangoDB->new($config);
-    my $coll = $db->collection('test1');
-    like exception { $coll->document() }, qr/^Failed to get the document/;
+    my $db = ArangoDB->new($config);
+    like exception { $db->document() }, qr/^Failed to get the document/;
 };
 
 subtest 'create document' => sub {
@@ -40,7 +39,7 @@ subtest 'create document' => sub {
     is_deeply $doc1->content, { foo => 'bar', baz => 10 };
     is $doc1->get('foo'), 'bar';
 
-    my $doc2 = $coll->document($doc1);
+    my $doc2 = $db->document($doc1);
     is_deeply $doc1, $doc2;
 
     my $doc3 = $coll->save();
@@ -63,8 +62,8 @@ subtest 'Delete document' => sub {
     my $coll = $db->collection('foo');
     my $doc  = $coll->save( { foo => 'bar' } );
     ok $doc;
-    $coll->document($doc)->delete();
-    like exception { $coll->document($doc) }, qr/^Failed to get the document/;
+    $db->document($doc)->delete();
+    like exception { $db->document($doc) }, qr/^Failed to get the document/;
 
     my $e = exception {
         $doc->delete();
@@ -78,7 +77,7 @@ subtest 'Update document' => sub {
     my $coll = $db->collection('foo');
     my $doc1 = $coll->save( { foo => 'bar' } );
     is_deeply $doc1->content, { foo => 'bar' };
-    my $doc2 = $coll->document($doc1);
+    my $doc2 = $db->document($doc1);
     $doc1->set( foo => 'baz' );
     $doc1->save();
     is $doc1->id, $doc2->id;
