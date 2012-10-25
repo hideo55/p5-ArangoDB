@@ -15,7 +15,7 @@ use overload '&{}' => sub {
     },
     fallback => 1;
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 $VERSION = eval $VERSION;
 
 sub new {

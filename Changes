@@ -1,5 +1,9 @@
 Revision history for Perl extension ArangoDB
 
+0.08    Fri Oct 26 01:50:00 2012
+        - Improve performance
+        - Change API(document,edge,get_index move to ArangoDB.pm)
+
 0.07    Mon Oct 22 03:20:00 2012
         - Optimize JSON encoding
 

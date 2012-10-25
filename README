@@ -115,6 +115,28 @@ METHODS
 
         my $sth = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u');
 
+  document($doc)
+    Get documnet in the collection based on $doc. Returns instance of
+    ArangoDB::Document.
+
+  edge($edge)
+    Get edge in the collection. Returns instance of ArangoDB::Edge.
+
+  index($index_id)
+    Returns index object.(ArangoDB::Index::*)
+
+    See:
+
+    *   ArangoDB::Index::Primary
+
+    *   ArangoDB::Index::Hash
+
+    *   ArangoDB::Index::SkipList
+
+    *   ArangoDB::Index::Geo
+
+    *   ArangoDB::Index::CapConstraint
+
 SEE ALSO
     ArangoDB websie <http://www.arangodb.org/>
 
