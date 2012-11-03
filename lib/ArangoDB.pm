@@ -6,7 +6,6 @@ use 5.008001;
 use Carp qw(croak);
 use ArangoDB::Connection;
 use ArangoDB::Collection;
-use ArangoDB::Document;
 use ArangoDB::Statement;
 use ArangoDB::Constants qw(:api);
 use overload '&{}' => sub {
@@ -103,7 +102,7 @@ sub index {
     my $api   = API_INDEX . '/' . $index_id;
     my $index = eval {
         my $res = $self->{connection}->http_get($api);
-        $self->_get_index_instance($res);
+        $self->ArangoDB::Collection::_get_index_instance($res);
     };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
@@ -118,10 +117,6 @@ sub _server_error_handler {
         $message .= ':' . ( $error->detail->{errorMessage} || q{} );
     }
     croak $message;
-}
-
-BEGIN {
-    *_get_index_instance = \&ArangoDB::Collection::_get_index_instance;
 }
 
 1;
@@ -305,7 +300,6 @@ L<https://github.com/hideo55/p5-ArangoDB>
 =head1 AUTHOR
 
 Hideaki Ohno E<lt>hide.o.j55 {at} gmail.comE<gt>
-
 
 =head1 LICENSE
 
