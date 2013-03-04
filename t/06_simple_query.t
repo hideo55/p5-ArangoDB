@@ -9,10 +9,12 @@ if ( !$ENV{TEST_ARANGODB_PORT} ) {
     plan skip_all => 'Can"t find port of arangod';
 }
 
-my $port   = $ENV{TEST_ARANGODB_PORT};
-my $config = {
+my $port        = $ENV{TEST_ARANGODB_PORT};
+my $api_version = $ENV{TEST_ARANGODB_VERSION};
+my $config      = {
     host => 'localhost',
     port => $port,
+    api  => $api_version,
 };
 
 init();

@@ -2,12 +2,18 @@ package ArangoDB;
 use strict;
 use warnings;
 use utf8;
-use 5.008001;
+use 5.010000;
 use Carp qw(croak);
+use Module::Load ();
 use ArangoDB::Connection;
 use ArangoDB::Collection;
 use ArangoDB::Statement;
-use ArangoDB::Constants qw(:api);
+use ArangoDB::Constants qw(:api :collection_type);
+use constant {
+    _COLLECTION_CLASS => q{},
+    _DOCUMENT_CLASS   => q{},
+    _EDGE_CLASS       => q{},
+};
 use overload '&{}' => sub {
     my $self = shift;
     return sub { $self->collection( $_[0] ) };
@@ -17,9 +23,20 @@ use overload '&{}' => sub {
 our $VERSION = '0.08';
 $VERSION = eval $VERSION;
 
+my %CLASS = (
+    '1.0' => 'ArangoDB::API::V1_0',
+    '1.1' => 'ArangoDB::API::V1_1',
+    '1.2' => 'ArangoDB::API::V1_2',
+);
+
 sub new {
     my ( $class, $options ) = @_;
-    my $self = bless { connection => ArangoDB::Connection->new($options), }, $class;
+    my $connection = ArangoDB::Connection->new($options);
+    my $api = $options->{api} || '1.0';
+    croak "'api' must be 1.0, 1.1 or 1.2" if !exists $CLASS{$api};
+    Module::Load::load( $CLASS{$api} );
+    my $instance_class = $CLASS{$api};
+    my $self = bless { connection => $connection, }, $instance_class;
     return $self;
 }
 
@@ -30,12 +47,12 @@ sub collection {
 
 sub create {
     my ( $self, $name, $_options ) = @_;
-    my $params = { ( waitForSync => 0, isSystem => 0 ), %{ $_options || {} } };
+    my $params = { ( waitForSync => 0, isSystem => 0, ), %{ $_options || {} } };
     $params->{name} = $name;
     my $coll;
     eval {
         my $res = $self->{connection}->http_post( API_COLLECTION, $params );
-        $coll = ArangoDB::Collection->new( $self, $res );
+        $coll = $self->_COLLECTION_CLASS->new( $self, $res );
     };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to create collection($name)" );
@@ -43,12 +60,15 @@ sub create {
     return $coll;
 }
 
+sub is_document_collection;
+sub is_edge_collection;
+
 sub find {
     my ( $self, $name ) = @_;
     my $api        = API_COLLECTION . '/' . $name;
     my $collection = eval {
         my $res = $self->{connection}->http_get($api);
-        ArangoDB::Collection->new( $self, $res );
+        $self->_COLLECTION_CLASS->new( $self, $res );
     };
     if ($@) {
         $self->_server_error_handler( $@, "Failed to get collection: $name", 1 );
@@ -61,7 +81,7 @@ sub collections {
     my @colls;
     eval {
         my $res = $self->{connection}->http_get(API_COLLECTION);
-        @colls = map { ArangoDB::Collection->new( $self, $_ ) } @{ $res->{collections} };
+        @colls = map { $self->_COLLECTION_CLASS->new( $self, $_ ) } @{ $res->{collections} };
     };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to get collections' );
@@ -82,7 +102,7 @@ sub document {
     if ($@) {
         $self->_server_error_handler( $@, "Failed to get the document($doc) in the collection(%s)" );
     }
-    return ArangoDB::Document->new( $self->{connection}, $res );
+    return $self->_DOCUMENT_CLASS->new( $self->{connection}, $res );
 }
 
 sub edge {
@@ -93,7 +113,7 @@ sub edge {
     if ($@) {
         $self->_server_error_handler( $@, "Failed to get the edge($edge) in the collection(%s)" );
     }
-    return ArangoDB::Edge->new( $self->{connection}, $res );
+    return $self->_EDGE_CLASS->new( $self->{connection}, $res );
 }
 
 sub index {
@@ -101,11 +121,12 @@ sub index {
     $index_id = defined $index_id ? $index_id : q{};
     my $api   = API_INDEX . '/' . $index_id;
     my $index = eval {
-        my $res = $self->{connection}->http_get($api);
-        $self->ArangoDB::Collection::_get_index_instance($res);
+        my $res  = $self->{connection}->http_get($api);
+        my $code = $self->_COLLECTION_CLASS->can('_get_index_instance');
+        $self->$code($res);
     };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+        $self->_server_error_handler( $@, "Failed to get the index($index_id)" );
     }
     return $index;
 }
@@ -134,6 +155,7 @@ ArangoDB - ArangoDB client for Perl
       host       => 'localhost',
       port       => 8529,
       keep_alive => 1,
+      api        => '1.2'
   );
   
   # Find or create collection
@@ -169,7 +191,7 @@ More information: L<http://www.arangodb.org/>
 
 =head1 SUPPORT API VERSION
 
-This supports ArangoDB API implementation 1.01.
+This module supports ArangoDB API implementation 1.0, 1.1 and 1.2.
 
 =head1 METHODS
 
@@ -180,6 +202,13 @@ Constructor.
 $options is HASH reference.The attributes of $options are:
 
 =over 4
+
+=item api
+
+ArangoDB API version.
+Now, supports '1.0', '1.1' and '1.2'.
+
+Default: 1.0
 
 =item host
 

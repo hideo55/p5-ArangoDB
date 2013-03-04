@@ -2,7 +2,7 @@ use strict;
 use warnings FATAL => 'all';
 use Module::Build;
 
-my $class = Module::Build->subclass( code  => <<'END_OF_CODE' );
+my $class = Module::Build->subclass( code => <<'END_OF_CODE' );
 sub ACTION_test {
     my $self = shift;
     require App::Prove;
@@ -23,7 +23,7 @@ $class->new(
     build_requires       => {
         'Test::More'        => '0.98',
         'App::Prove'        => 0,
-        'Test::Fatal'       => 0,
+        'Test::Fatal'       => '0.008',
         'Test::Deep'        => 0,
         'Test::TCP'         => 0,
         'Test::Mock::Guard' => 0,
@@ -45,9 +45,9 @@ $class->new(
     recommends => { 'Data::Clone' => 0, },
     no_index   => { 'directory'   => [ 't', 'xt', 'inc', 'eg' ] },
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? [qw(t/ xt/)] : ['t/'],
-    create_readme  => 1,
-    add_to_cleanup => ['ArangoDB-*'],
-    meta_merge     => {
+    create_readme      => 1,
+    add_to_cleanup     => ['ArangoDB-*'],
+    meta_merge         => {
         keywords  => [qw/arngodb database/],
         resources => {
             repository => 'git://github.com/hideo55/p5-ArangoDB.git',

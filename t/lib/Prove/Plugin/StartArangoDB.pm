@@ -14,6 +14,14 @@ sub load {
         return;
     }
 
+    my $version = `arangod --version`;
+    if ( $version =~ /^([0-9]+)\.([0-9]+)\.[0-9]+/ ) {
+        $ENV{TEST_ARANGODB_VERSION} = "${1}.${2}";
+    }
+    else {
+        return;
+    }
+
     $TMP_DIR = File::Temp->newdir;
 
     eval {
@@ -22,7 +30,12 @@ sub load {
                 my $port = shift;
                 diag "Starting arangod on 127.0.0.1:$port";
                 my $dir = $TMP_DIR->dirname;
-                exec "arangod --server.http-port $port $dir";
+                if ( $ENV{TEST_ARANGODB_VERSION} eq '1.0' ) {
+                    exec "arangod --server.http-port $port $dir";
+                }
+                else {
+                    exec "arangod --server.endpoint tcp://127.0.0.1:$port $dir";
+                }
             }
         );
 

@@ -9,11 +9,14 @@ if ( !$ENV{TEST_ARANGODB_PORT} ) {
     plan skip_all => 'Can"t find port of arangod';
 }
 
+my $api_version = $ENV{TEST_ARANGODB_VERSION};
+
 my $port   = $ENV{TEST_ARANGODB_PORT};
 my $config = {
     host       => 'localhost',
     port       => $port,
     keep_alive => 1,
+    api        => $api_version,
 };
 
 sub init {
@@ -137,7 +140,7 @@ subtest 'unload and load collection' => sub {
     my $coll = $db->collection('bar');
     ok $coll->is_loaded;
     $coll->unload;
-    ok $coll->is_being_unloaded;
+    ok( $coll->is_unloaded || $coll->is_being_unloaded );
     $coll->load;
     ok $coll->is_loaded;
 };
@@ -215,6 +218,36 @@ subtest 'fail truncate collection' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('foo');
     like exception { $coll->truncate() }, qr/^Failed to truncate the collection\(foo\)/;
+};
+
+subtest 'set/get journalSize' => sub {
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('foo');
+    my $size = $coll->journal_size;
+    like $size, qr/^[0-9]+$/;
+    $coll->journal_size( 1024 * 1024 );
+    my $size2 = $size = $coll->journal_size;
+    is $size2, ( 1024 * 1024 );
+};
+
+subtest 'get isVolatile propertie' => sub {
+    plan 'skip_all' => 'Tests for API 1.2 or later' if $api_version ne '1.2';
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('foo');
+    ok defined $coll->is_volatile;
+};
+
+
+subtest 'collection type' => sub {
+    plan 'skip_all' => 'Tests for API 1.1 or later' if $api_version eq '1.0';
+    my $db   = ArangoDB->new($config);
+    my $dcol = $db->create_document_collection('doc_col1');
+    ok $dcol->is_document_collection;
+    ok !$dcol->is_edge_collection;
+
+    my $ecol = $db->create_edge_collection('edge_col1');
+    ok !$ecol->is_document_collection;
+    ok $ecol->is_edge_collection;
 };
 
 done_testing;

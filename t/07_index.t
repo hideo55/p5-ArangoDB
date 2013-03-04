@@ -8,11 +8,13 @@ if ( !$ENV{TEST_ARANGODB_PORT} ) {
     plan skip_all => 'Can"t find port of arangod';
 }
 
-my $port   = $ENV{TEST_ARANGODB_PORT};
-my $config = {
+my $port        = $ENV{TEST_ARANGODB_PORT};
+my $api_version = $ENV{TEST_ARANGODB_VERSION};
+my $config      = {
     host       => 'localhost',
     port       => $port,
     keep_alive => 1,
+    api        => $api_version
 };
 
 init();
@@ -33,7 +35,12 @@ subtest 'hash index' => sub {
     isa_ok $index1, 'ArangoDB::Index::Hash';
     is $index1->type, 'hash';
     is_deeply $index1->fields, [qw/bar.a/];
-    is $index1->collection_id, $coll->id;
+    if ( $api_version eq '1.2' ) {
+        is $index1->collection_id, $coll->name;
+    }
+    else {
+        is $index1->collection_id, $coll->id;
+    }
 
     like exception {
         $coll->ensure_hash_index( [] );
@@ -195,7 +202,13 @@ subtest 'get index' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test9');
 
-    my $index = $db->index( $coll . '/0' );
+    my $index;
+    if ( $api_version eq '1.2' ) {
+        $index = $db->index( $coll->name . '/0' );
+    }
+    else {
+        $index = $db->index( $coll->id . '/0' );
+    }
     isa_ok $index, 'ArangoDB::Index::Primary';
     is $index->fields->[0], '_id';
 

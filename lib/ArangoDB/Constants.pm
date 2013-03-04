@@ -12,15 +12,17 @@ my @api = qw(API_DOCUMENT API_COLLECTION API_CURSOR API_EXAMPLE API_EDGE API_QUE
     API_SIMPLE_FIRST API_SIMPLE_RANGE API_SIMPLE_NEAR API_SIMPLE_WITHIN API_INDEX API_IMPORT API_EDGES API_EXPLAIN
     API_KEY API_KEYS);
 
-my @status = qw(NEWBORN UNLOADED LOADED BEING_UNLOADED DELETED CORRUPTED);
+my @status          = qw(NEWBORN UNLOADED LOADED BEING_UNLOADED DELETED CORRUPTED);
+my @collection_type = qw(DOCUMENT_COLLECTION EDGE_COLLECTION);
 
-our @EXPORT_OK = ( @options, @policies, @api, @status );
+our @EXPORT_OK = ( @options, @policies, @api, @status, @collection_type );
 our %EXPORT_TAGS = (
-    all    => \@EXPORT_OK,
-    option => \@options,
-    policy => \@policies,
-    api    => \@api,
-    status => \@status,
+    all             => \@EXPORT_OK,
+    option          => \@options,
+    policy          => \@policies,
+    api             => \@api,
+    status          => \@status,
+    collection_type => \@collection_type,
 );
 
 # Options
@@ -65,6 +67,7 @@ use constant {
 
 };
 
+# Status
 use constant {
     NEWBORN        => 1,
     UNLOADED       => 2,
@@ -72,6 +75,12 @@ use constant {
     BEING_UNLOADED => 4,
     DELETED        => 5,
     CORRUPTED      => 6,
+};
+
+# Collection type
+use constant {
+    DOCUMENT_COLLECTION => 2,
+    EDGE_COLLECTION     => 3,
 };
 
 1;

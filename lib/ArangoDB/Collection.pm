@@ -17,6 +17,10 @@ use ArangoDB::Index::Geo;
 use ArangoDB::Index::CapConstraint;
 use ArangoDB::Cursor;
 use ArangoDB::ClientException;
+use constant {
+    _DOCUMENT_CLASS => 'ArangoDB::Document',
+    _EDGE_CLASS     => 'ArangoDB::::Edge',
+};
 use overload
     q{""}    => sub { shift->id },
     fallback => 1;
@@ -82,6 +86,30 @@ sub name {
     }
     return $self->{name};
 }
+
+=pod
+
+=head2 is_document_collection()
+
+[API 1.1 later]
+
+Return true if the collection is document collection.
+
+=cut
+
+sub is_document_collection;
+
+=pod
+
+=head2 is_edge_collection()
+
+[API 1.1 later]
+
+Return true if the collection is edge collection.
+
+=cut
+
+sub is_edge_collection;
 
 =pod
 
@@ -287,6 +315,12 @@ The total filesize of journal files.
 
 The maximal size of the journal in bytes.
 
+=item shapes-count
+
+[API 1.1 later]
+
+The total number of shapes used in the collection.
+
 =back
 
 =cut
@@ -329,6 +363,37 @@ sub wait_for_sync {
         return $ret;
     }
 }
+
+=pod
+
+=head2 journal_size($size)
+
+Size (in bytes) for new journal files that are created for the collection.
+
+=cut
+
+sub journal_size {
+    my $self = shift;
+    if ( @_ > 0 ) {
+        my $val = shift;
+        my $res = $self->_put_to_this( 'properties', { journalSize => $val } );
+    }
+    else {
+        my $res = $self->_get_from_this('properties');
+        return $res->{journalSize};
+    }
+}
+
+=pod
+
+=head2 is_volatile()
+
+If true then the collection data will be kept in memory only and ArangoDB will not write or sync the data to disk.
+
+=cut
+
+
+sub is_volatile;
 
 =pod
 
@@ -1007,7 +1072,7 @@ sub get_indexes {
         map { $self->_get_index_instance($_) } @{ $res->{indexes} };
     };
     if ($@) {
-        $self->_server_error_handler( $@, 'Failed to get the index($index_id) on the collection(%s)' );
+        $self->_server_error_handler( $@, "Failed to get the indexes on the collection(%s)" );
     }
     return \@indexes;
 }

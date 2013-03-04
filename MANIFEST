@@ -3,6 +3,12 @@ Changes
 eg/arangodb.pl
 lib/ArangoDB.pm
 lib/ArangoDB/AbstractDocument.pm
+lib/ArangoDB/API/V1_0.pm
+lib/ArangoDB/API/V1_0/Collection.pm
+lib/ArangoDB/API/V1_1.pm
+lib/ArangoDB/API/V1_1/Collection.pm
+lib/ArangoDB/API/V1_2.pm
+lib/ArangoDB/API/V1_2/Collection.pm
 lib/ArangoDB/BindVars.pm
 lib/ArangoDB/ClientException.pm
 lib/ArangoDB/Collection.pm

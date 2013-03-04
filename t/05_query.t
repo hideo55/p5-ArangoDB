@@ -9,10 +9,12 @@ if ( !$ENV{TEST_ARANGODB_PORT} ) {
     plan skip_all => 'Can"t find port of arangod';
 }
 
-my $port   = $ENV{TEST_ARANGODB_PORT};
-my $config = {
+my $port        = $ENV{TEST_ARANGODB_PORT};
+my $api_version = $ENV{TEST_ARANGODB_VERSION};
+my $config      = {
     host => 'localhost',
     port => $port,
+    api  => $api_version,
 };
 
 init();
@@ -77,8 +79,8 @@ subtest 'Use bind var1' => sub {
     }
     is_deeply \@docs2, [ { name => 'John Doe', age => 42 }, ];
 
-    my $docs3 = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u')->bind( age => 10 )
-        ->execute->all;
+    my $docs3
+        = $db->query('FOR u IN users FILTER u.age > @age SORT u.name ASC RETURN u')->bind( age => 10 )->execute->all;
     is_deeply [ map { $_->content } @$docs3 ], $expects;
 
     my $cur3 = $sth->bind( { age => [ 1 .. 10 ] } )->execute( { do_count => 1, batch_size => 0 } );
@@ -199,9 +201,9 @@ subtest 'cursor' => sub {
     );
     my $doc = $cur->next;
     isa_ok $doc, 'ArangoDB::Document';
-    
-    like exception{ $cur->next }, qr/^Invalid argument for ArangoDB\:\:Document/;
-    
+
+    like exception { $cur->next }, qr/^Invalid argument for ArangoDB\:\:Document/;
+
     pass();
 };
 

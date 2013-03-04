@@ -16,11 +16,25 @@ my $db = ArangoDB->new(
     }
 );
 
-isa_ok( $db, "ArangoDB" );
+isa_ok $db, 'ArangoDB';
+isa_ok $db, 'ArangoDB::API::V1_0';
 ok exception { $db->find('foo') };
 
+$db = ArangoDB->new(
+    {   api => '1.1',
+    }
+);
+isa_ok $db, 'ArangoDB::API::V1_1';
+
+$db = ArangoDB->new(
+    {   api => '1.2',
+    }
+);
+isa_ok $db, 'ArangoDB::API::V1_2';
+
+
 lives_ok {
-    ArangoDB->new();  
+    ArangoDB->new();
 };
 
 like exception {
@@ -118,10 +132,7 @@ like exception {
 }, qr/^auth_passwd should be a string/;
 
 like exception {
-    ArangoDB->new(
-        {   'inet_aton' => {},
-        }
-    );
+    ArangoDB->new( { 'inet_aton' => {}, } );
 }, qr/^inet_aton should be a CODE reference/;
 
 done_testing;

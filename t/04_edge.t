@@ -13,10 +13,12 @@ if ( !$ENV{TEST_ARANGODB_PORT} ) {
     plan skip_all => 'Can"t find port of arangod';
 }
 
-my $port   = $ENV{TEST_ARANGODB_PORT};
-my $config = {
+my $port        = $ENV{TEST_ARANGODB_PORT};
+my $api_version = $ENV{TEST_ARANGODB_VERSION};
+my $config      = {
     host => 'localhost',
     port => $port,
+    api  => $api_version,
 };
 
 init();
@@ -28,7 +30,12 @@ sub init {
 
 subtest 'create edge' => sub {
     my $db    = ArangoDB->new($config);
-    my $coll  = $db->create('foo');
+    my $coll;
+    if( $api_version eq '1.0' ){
+        $coll  = $db->create('foo');
+    }else{
+        $coll  = $db->create_edge_collection('foo');
+    }
     my $doc1  = $coll->save( { foo => 'bar', baz => 10 } );
     my $doc2  = $coll->save( { foo => 'qux', baz => 11 } );
     my $edge1 = $coll->save_edge( $doc1, $doc2, { foo => 1 } );
@@ -53,7 +60,12 @@ subtest 'create edge' => sub {
 
 subtest 'get edges' => sub {
     my $db   = ArangoDB->new($config);
-    my $coll = $db->collection('test1');
+    my $coll;
+    if( $api_version eq '1.0' ){
+        $coll  = $db->create('test1');
+    }else{
+        $coll  = $db->create_edge_collection('test1');
+    }
     my $doc1 = $coll->save( { foo => 1 } );
     my $doc2 = $coll->save( { foo => 2 } );
     my $doc3 = $coll->save( { foo => 3 } );
