@@ -99,6 +99,22 @@ sub http_delete {
     return $self->_parse_response( $code, $msg, $body );
 }
 
+sub http_patch {
+    my ( $self, $path, $data, $raw, $additional_headers ) = @_;
+    if( !$raw ){
+        $data = $JSON->encode( defined $data ? $data : {} );
+    }
+    my $headers = $self->_build_headers($data, $additional_headers);
+    my ( undef, $code, $msg, undef, $body ) = $self->{_http_agent}->request(
+        %{ $self->{_req_args} },
+        method     => 'PATCH',
+        path_query => $path,
+        headers    => $headers,
+        content    => $data,
+    );
+    return $self->_parse_response( $code, $msg, $body );
+}
+
 sub _build_headers {
     my ( $self, $body, $additional_headers ) = @_;
     my $content_length = length( $body || q{} );

@@ -182,4 +182,26 @@ subtest 'bulk import - self-contained' => sub {
     }, qr/^Parameter must be ARRAY reference/;
 };
 
+subtest 'partial update' => sub {
+    plan 'skip_all' => 'Tests for API 1.1 or later' if ( $api_version eq '1.0' );
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('foo');
+    my $doc1 = $coll->save( { a => 1, b => 'foo' } );
+    $doc1->partial_update( { c => 1 } );
+    is_deeply $doc1->content, { a => 1, b => 'foo', c => 1 };
+    $doc1->partial_update( { a => undef }, 0 );
+    is_deeply $doc1->content, { b => 'foo', c => 1 };
+
+    my $e = exception {
+        my $guard = mock_guard(
+            'ArangoDB::Connection' => {
+                http_patch => sub {die}
+            }
+        );
+        $doc1->partial_update();
+    };
+    like $e, qr{^Failed to partialy update the document}
+
+};
+
 done_testing;

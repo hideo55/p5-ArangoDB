@@ -15,8 +15,10 @@ my %INNER_CLASSES = map { $_ => 1 } qw/
     ArangoDB::API::V1_0::Collection
     ArangoDB::API::V1_1
     ArangoDB::API::V1_1::Collection
+    ArangoDB::API::V1_1::Document
     ArangoDB::API::V1_2
     ArangoDB::API::V1_2::Collection
+    ArangoDB::API::V1_2::Document
     /;
     
 

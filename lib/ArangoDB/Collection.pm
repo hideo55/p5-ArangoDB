@@ -423,7 +423,7 @@ sub save {
     my $api = API_DOCUMENT . '?collection=' . $self->{id};
     my $doc = eval {
         my $res = $self->{connection}->http_post( $api, $data );
-        ArangoDB::Document->new( $self->{connection}, $res )->fetch;
+        $self->_DOCUMENT_CLASS->new( $self->{connection}, $res )->fetch;
     };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to save the new document to the collection(%s)' );

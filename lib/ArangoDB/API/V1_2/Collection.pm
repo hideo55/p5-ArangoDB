@@ -4,6 +4,9 @@ use warnings;
 use parent 'ArangoDB::API::V1_1::Collection';
 use ArangoDB::Constants qw(:api :collection_type);
 use ArangoDB::Index::Fulltext;
+use constant {
+    _DOCUMENT_CLASS => 'ArangoDB::API::V1_2::Document',
+};
 
 sub is_volatile {
     my $self = shift;

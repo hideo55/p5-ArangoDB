@@ -114,6 +114,24 @@ Save the changes of document to database.
 
 $with_rev_check is boolean flag. If it's true, the ArangoDB checks that the revision of the document. If there is a conflict, this method raise a error.
 
+=head2 partial_update($value[,$keep_null])
+
+[API 1.1 or later]
+
+Partially updates the document.
+
+=over 4
+
+=item $value
+
+Patch of document.
+
+=item $keep_null
+
+If false, remove any attributes from the existing document that are contained in the patch document with an attribute value of null.
+
+=back
+
 =head2 delete()
 
 Delete the document from database.
