@@ -857,7 +857,7 @@ sub within {
 
 =pod
 
-=head2 fulltext($attr,$query,$options)
+=head2 fulltext($attr,$query[,$options])
 
 [API 1.2 or later]
 
