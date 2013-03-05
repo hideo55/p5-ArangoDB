@@ -10,7 +10,15 @@ my %INNER_CLASSES = map { $_ => 1 } qw/
     ArangoDB::Connection
     ArangoDB::Constants
     ArangoDB::Index
-    ArangoDB::ServerException/;
+    ArangoDB::ServerException
+    ArangoDB::API::V1_0
+    ArangoDB::API::V1_0::Collection
+    ArangoDB::API::V1_1
+    ArangoDB::API::V1_1::Collection
+    ArangoDB::API::V1_2
+    ArangoDB::API::V1_2::Collection
+    /;
+    
 
 for my $pkg ( grep { !exists $INNER_CLASSES{$_} } all_modules() )
 {

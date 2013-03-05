@@ -127,6 +127,18 @@ sub count {
 
 =pod
 
+=head2 revision()
+
+[API 1.2 or later]
+
+The collection revision id.
+
+=cut
+
+sub revision;
+
+=pod
+
 =head2 drop()
 
 Drop the collection.
@@ -391,7 +403,6 @@ sub journal_size {
 If true then the collection data will be kept in memory only and ArangoDB will not write or sync the data to disk.
 
 =cut
-
 
 sub is_volatile;
 
@@ -846,6 +857,48 @@ sub within {
 
 =pod
 
+=head2 fulltext($attr,$query,$options)
+
+[API 1.2 or later]
+
+Send 'fulltext' simple query. Returns instance of L<ArangoDB::Cursor>.
+
+This will find all documents from the collection that match the fulltext query specified in query.
+
+=over 4
+
+=item $attr
+
+=item $query
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item limit
+
+The maximal amount of documents to return. (optional)
+
+=item skip
+
+The documents to skip in the query. (optional)
+
+=item index
+
+If given, the identifier of the fulltext-index to use. (optional)
+
+=back
+
+=back
+
+=cut
+
+sub fulltext;
+
+=pod
+
 =head1 METHODS FOR INDEX HANDLING
 
 =head2 ensure_hash_index($fileds)
@@ -991,6 +1044,35 @@ sub ensure_geo_index {
     }
     return ArangoDB::Index::Geo->new( $self->{connection}, $res );
 }
+
+=pod
+
+=head2 ensure_fulltext_index($filed[,$min_length])
+
+[API 1.2 or later]
+
+Create fulltext index for the collection. Returns instance of L<ArangoDB::Index::Fulltext>.
+
+This fulltext is then used in queries to locate documents within a given range. 
+
+=over 4
+
+=item $filed
+
+The field of index.
+
+=item $min_length
+
+Minimum character length of words to index. 
+
+=back
+
+    $collection->ensure_fulltext_index('name');
+    $collection->save({ user => { name => 'John', age => 42 } });
+
+=cut
+
+sub ensure_fulltext_index;
 
 =pod
 

@@ -360,6 +360,8 @@ See:
 
 =item * L<ArangoDB::Index::CapConstraint>
 
+=item * L<ArangoDB::Index::Fulltext>
+
 =back
 
 =head1 SEE ALSO

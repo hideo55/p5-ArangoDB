@@ -8,6 +8,7 @@ SYNOPSIS
           host       => 'localhost',
           port       => 8529,
           keep_alive => 1,
+          api        => '1.2'
       );
   
       # Find or create collection
@@ -42,13 +43,17 @@ DESCRIPTION
     More information: <http://www.arangodb.org/>
 
 SUPPORT API VERSION
-    This supports ArangoDB API implementation 1.01.
+    This module supports ArangoDB API implementation 1.0, 1.1 and 1.2.
 
 METHODS
   new($options)
     Constructor.
 
     $options is HASH reference.The attributes of $options are:
+
+    api ArangoDB API version. Now, supports '1.0', '1.1' and '1.2'.
+
+        Default: 1.0
 
     host
         Hostname or IP address of ArangoDB server.
@@ -98,8 +103,49 @@ METHODS
 
         my $collection = $db->('collection-name');
 
-  create($name)
+  create($name,$options)
     Create new collection. Returns instance of ArangoDB::Collection.
+
+    $options is HASH reference.The attributes of $options are:
+
+    waitForSync
+        If true then the data is synchronised to disk before returning from
+        a create or update of an document.
+
+        Default: false
+
+    journalSize
+        The maximal size of a journal or datafile.
+
+    isSystem
+        If true, create a system collection. In this case collection-name
+        should start with an underscore.
+
+        Default: false
+
+    type
+        [API 1.1 or later]
+
+        Collection type. ArangoDB::DOCUMENT_COLLECTION or
+        ArangoDB::EDGE_COLLECTION is avaiable.
+
+        Default: ArangoDB::DOCUMENT_COLLECTION
+
+    isVolatile
+        [API 1.2 or later]
+
+        If true then the collection data is kept in-memory only and not made
+        persistent.
+
+        Default: false
+
+  create_document_collection($name,$options)
+    Create new document collection. instance of ArangoDB::Collection.
+    $options is same as create().
+
+  create_edge_collection($name,$options)
+    Create new edge collection. instance of ArangoDB::Collection. $options
+    is same as create().
 
   find($name)
     Get a Collection based on $name. Returns instance of
@@ -136,6 +182,8 @@ METHODS
     *   ArangoDB::Index::Geo
 
     *   ArangoDB::Index::CapConstraint
+
+    *   ArangoDB::Index::Fulltext
 
 SEE ALSO
     ArangoDB websie <http://www.arangodb.org/>

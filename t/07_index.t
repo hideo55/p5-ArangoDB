@@ -175,9 +175,25 @@ subtest 'CAP constraint' => sub {
 
 };
 
-subtest 'get indexes' => sub {
+subtest 'Fulltext index' => sub {
+    plan 'skip_all' => 'Tests for API 1.2 or later' if $api_version ne '1.2';
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test8');
+    my $index  = $coll->ensure_fulltext_index('name');
+    isa_ok $index, 'ArangoDB::Index::Fulltext';
+    my $id = 0;
+    $coll->save({ id => $id++, name => 'fooooooo' });
+    
+    my $index2 = $db->index($index);
+    isa_ok $index2, 'ArangoDB::Index::Fulltext';
+
+    like exception { $coll->ensure_fulltext_index() }, qr/^Failed to create fulltext index on the collection/;
+
+};
+
+subtest 'get indexes' => sub {
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('index_test9');
 
     $coll->ensure_hash_index( [qw/foo/] );
     $coll->ensure_skiplist(   [qw/bar/] );
@@ -200,7 +216,7 @@ subtest 'get indexes' => sub {
 
 subtest 'get index' => sub {
     my $db   = ArangoDB->new($config);
-    my $coll = $db->collection('index_test9');
+    my $coll = $db->collection('index_test10');
 
     my $index;
     if ( $api_version eq '1.2' ) {
@@ -217,7 +233,7 @@ subtest 'get index' => sub {
 
 subtest 'unknown index' => sub {
     my $db   = ArangoDB->new($config);
-    my $coll = $db->collection('index_test10');
+    my $coll = $db->collection('index_test11');
 
     like exception {
         my $guard = mock_guard(
@@ -244,7 +260,7 @@ subtest 'unknown index' => sub {
 
 subtest 'Drop index' => sub {
     my $db   = ArangoDB->new($config);
-    my $coll = $db->collection('index_test11');
+    my $coll = $db->collection('index_test12');
 
     my $index = $coll->ensure_hash_index( [qw/foo/] );
     $index->drop();
