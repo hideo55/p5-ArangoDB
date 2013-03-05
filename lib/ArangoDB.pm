@@ -23,6 +23,7 @@ use overload '&{}' => sub {
 our $VERSION = '0.08';
 $VERSION = eval $VERSION;
 
+our $DEFAULT_API_VERSION = '1.0';
 my %CLASS = (
     '1.0' => 'ArangoDB::API::V1_0',
     '1.1' => 'ArangoDB::API::V1_1',
@@ -32,7 +33,7 @@ my %CLASS = (
 sub new {
     my ( $class, $options ) = @_;
     my $connection = ArangoDB::Connection->new($options);
-    my $api = $options->{api} || '1.0';
+    my $api = $options->{api} || $DEFAULT_API_VERSION;
     croak "'api' must be 1.0, 1.1 or 1.2" if !exists $CLASS{$api};
     Module::Load::load( $CLASS{$api} );
     my $instance_class = $CLASS{$api};
@@ -59,9 +60,6 @@ sub create {
     }
     return $coll;
 }
-
-sub is_document_collection;
-sub is_edge_collection;
 
 sub find {
     my ( $self, $name ) = @_;
@@ -268,9 +266,57 @@ There is shorthand method for get collection instance.
 
     my $collection = $db->('collection-name');
 
-=head2 create($name)
+=head2 create($name,$options)
 
 Create new collection. Returns instance of L<ArangoDB::Collection>.
+
+$options is HASH reference.The attributes of $options are:
+
+=over 4
+
+=item waitForSync
+
+If true then the data is synchronised to disk before returning from a create or update of an document.
+
+Default: false
+
+=item journalSize
+
+The maximal size of a journal or datafile.
+
+=item isSystem
+
+If true, create a system collection. In this case collection-name should start with an underscore.
+
+Default: false
+
+=item type
+
+[API 1.1 or later]
+
+Collection type. ArangoDB::DOCUMENT_COLLECTION or ArangoDB::EDGE_COLLECTION is avaiable.
+
+Default: ArangoDB::DOCUMENT_COLLECTION 
+
+=item isVolatile
+
+[API 1.2 or later]
+
+If true then the collection data is kept in-memory only and not made persistent. 
+
+Default: false
+
+=back
+
+=head2 create_document_collection($name,$options)
+
+Create new document collection. instance of L<ArangoDB::Collection>.
+$options is same as create().
+
+=head2 create_edge_collection($name,$options)
+
+Create new edge collection. instance of L<ArangoDB::Collection>.
+$options is same as create().
 
 =head2 find($name)
 
