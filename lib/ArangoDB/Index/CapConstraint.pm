@@ -2,7 +2,7 @@ package ArangoDB::Index::CapConstraint;
 use strict;
 use warnings;
 use utf8;
-use 5.008001;
+use 5.010000;
 use parent 'ArangoDB::Index';
 use Class::Accessor::Lite ( ro => [qw/size/], );
 

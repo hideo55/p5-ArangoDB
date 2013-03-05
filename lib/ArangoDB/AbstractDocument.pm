@@ -2,7 +2,7 @@ package ArangoDB::AbstractDocument;
 use strict;
 use warnings;
 use utf8;
-use 5.008001;
+use 5.010000;
 use Scalar::Util qw(weaken);
 
 use overload

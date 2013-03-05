@@ -2,7 +2,7 @@ package ArangoDB::Constants;
 use strict;
 use warnings;
 use utf8;
-use 5.008001;
+use 5.010000;
 use parent qw(Exporter);
 
 my @options = qw(OPTION_ENDPOINT OPTION_HOST OPTION_PORT OPTION_PILICY OPTION_WAIT_SYNC OPTION_AUTH_USER

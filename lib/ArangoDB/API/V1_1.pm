@@ -1,6 +1,7 @@
 package ArangoDB::API::V1_1;
 use strict;
 use warnings;
+use 5.010000;
 use parent 'ArangoDB';
 use ArangoDB::Constants qw(:api :collection_type);
 use constant {

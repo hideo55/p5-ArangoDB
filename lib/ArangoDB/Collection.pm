@@ -2,7 +2,7 @@ package ArangoDB::Collection;
 use strict;
 use warnings;
 use utf8;
-use 5.008001;
+use 5.010000;
 use JSON ();
 use Carp qw(croak);
 use Scalar::Util qw(weaken);

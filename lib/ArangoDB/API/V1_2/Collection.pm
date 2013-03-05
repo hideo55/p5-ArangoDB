@@ -1,6 +1,7 @@
 package ArangoDB::API::V1_2::Collection;
 use strict;
 use warnings;
+use 5.010000;
 use parent 'ArangoDB::API::V1_1::Collection';
 use ArangoDB::Constants qw(:api :collection_type);
 use ArangoDB::Index::Fulltext;
