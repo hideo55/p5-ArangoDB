@@ -23,6 +23,7 @@ use overload '&{}' => sub {
 our $VERSION = '0.08';
 $VERSION = eval $VERSION;
 
+our $DEFAULT_API_VERSION = '1.0';
 my %CLASS = (
     '1.0' => 'ArangoDB::API::V1_0',
     '1.1' => 'ArangoDB::API::V1_1',
@@ -32,7 +33,7 @@ my %CLASS = (
 sub new {
     my ( $class, $options ) = @_;
     my $connection = ArangoDB::Connection->new($options);
-    my $api = $options->{api} || '1.0';
+    my $api = $options->{api} || $DEFAULT_API_VERSION;
     croak "'api' must be 1.0, 1.1 or 1.2" if !exists $CLASS{$api};
     Module::Load::load( $CLASS{$api} );
     my $instance_class = $CLASS{$api};
