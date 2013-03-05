@@ -639,6 +639,132 @@ sub by_example {
 
 =pod
 
+=head2 remove_by_example($example[,$options])
+
+Send 'remove_by_example' simple query. Returns the number of documents that were deleted.
+
+This will delete all documents matching a given example.
+
+    my $deleted = $collection->remove_by_example({ age => 20 });
+
+=over 4
+
+=item $example
+
+The exmaple.
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item waitForSync
+
+if set to true, then all removal operations will instantly be synchronised to disk. 
+
+=item limit
+
+The maximal amount of documents to delete. (optional)
+
+=back 
+
+=back
+
+=cut
+
+sub remove_by_example;
+
+=pod
+
+=head2 replace_by_example($example,$new_value[,$options])
+
+Send 'replace_by_example' simple query. Returns the number of documents that were replaced.
+
+This will replace all documents matching a given example.
+
+    my $replaced = $collection->replace_by_example({ age => 20 }, { foo => 'bar' });
+
+=over 4
+
+=item $example
+
+The exmaple.
+
+=item $new_value
+
+The replacement document that will get inserted in place of the "old" documents.
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item waitForSync
+
+if set to true, then all removal operations will instantly be synchronised to disk. 
+
+=item limit
+
+The maximal amount of documents to replace. (optional)
+
+=back 
+
+=back
+
+=cut
+
+sub replace_by_example;
+
+=pod
+
+=head2 update_by_example($example,$new_value[,$options])
+
+Send 'update_by_example' simple query. Returns the number of documents that were updated.
+
+This will update all documents matching a given example.
+
+    my $updated = $collection->update_by_example({ age => 20 }, { foo => 'bar' });
+
+=over 4
+
+=item $example
+
+The exmaple.
+
+=item $new_value
+
+The update value that will get inserted in place of the "old" version of the found documents.
+
+=item $options
+
+Query option(HASH reference).The attributes of $options are:
+
+=over 4
+
+=item keepNull
+
+If set to false, all attributes in data with null values will be removed from the updated document.
+
+=item waitForSync
+
+if set to true, then all removal operations will instantly be synchronised to disk. 
+
+=item limit
+
+The maximal amount of documents to replace. (optional)
+
+=back 
+
+=back
+
+=cut
+
+sub update_by_example;
+
+=pod
+
 =head2 first_example($example)
 
 Send 'first_example' simple query. Returns instance of L<ArangoDB::Document>.

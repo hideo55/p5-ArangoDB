@@ -128,7 +128,7 @@ Patch of document.
 
 =item $keep_null
 
-If false, remove any attributes from the existing document that are contained in the patch document with an attribute value of null.
+If set to false, remove any attributes from the existing document that are contained in the patch document with an attribute value of null.
 
 =back
 

@@ -227,4 +227,34 @@ subtest 'simple query - within' => sub {
 
 };
 
+subtest 'simple query - fulltext' => sub {
+    plan 'skip_all' => 'Tests for API 1.2 or later' if $api_version ne '1.2';
+
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('test6');
+    $coll->save( { name => 'foo bar',      x => { a => 1, b => 2 } } );
+    $coll->save( { name => 'bar xxx foo',   x => { a => 2, b => 2 } } );
+    $coll->save( { name => 'baz',          x => { a => 3, b => 2 } } );
+    $coll->save( { name => 'qux',          x => { b => 1, a => 1 } } );
+    $coll->save( { name => 'xxx foo x qux', x => { b => 1, a => 1 } } );
+    my $index = $coll->ensure_fulltext_index('name');
+
+    my $cur = $coll->fulltext( 'name', 'foo', { index => $index->id } );
+    isa_ok $cur, 'ArangoDB::Cursor';
+
+    my @docs;
+    while ( my $doc = $cur->next ) {
+        push @docs, $doc->content;
+    }
+
+    is scalar(@docs), 3;
+
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection', { http_put => sub {die}, } );
+        $coll->fulltext('foo');
+    };
+    like $e, qr/^Failed to call Simple API\(fulltext\) for the collection/;
+
+};
+
 done_testing;
