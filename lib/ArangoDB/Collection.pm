@@ -97,7 +97,9 @@ Return true if the collection is document collection.
 
 =cut
 
-sub is_document_collection;
+sub is_document_collection {
+    die 'is_document_collection() should use with API 1.1 or later.';
+}
 
 =pod
 
@@ -109,7 +111,9 @@ Return true if the collection is edge collection.
 
 =cut
 
-sub is_edge_collection;
+sub is_edge_collection {
+    die 'is_edge_collection() should use with API 1.1 or later.';
+}
 
 =pod
 
@@ -135,7 +139,9 @@ The collection revision id.
 
 =cut
 
-sub revision;
+sub revision {
+    die 'revision() should use with API 1.2 or later.';
+}
 
 =pod
 
@@ -400,6 +406,8 @@ sub journal_size {
 
 =head2 is_volatile()
 
+[API 1.2 or later]
+
 If true then the collection data will be kept in memory only and ArangoDB will not write or sync the data to disk.
 
 =cut
@@ -586,7 +594,7 @@ sub all {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(all) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->_DOCUMENT_CLASS );
 }
 
 =pod
@@ -634,7 +642,7 @@ sub by_example {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(by_example) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->_DOCUMENT_CLASS );
 }
 
 =pod
@@ -673,7 +681,9 @@ The maximal amount of documents to delete. (optional)
 
 =cut
 
-sub remove_by_example;
+sub remove_by_example {
+    die 'remove_by_example() should use with API 1.1 or later.';
+}
 
 =pod
 
@@ -784,7 +794,7 @@ sub first_example {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(first_example) for the collection(%s)' );
     }
-    return ArangoDB::Document->new( $self->{connection}, $res->{document} );
+    return $self->_DOCUMENT_CLASS->new( $self->{connection}, $res->{document} );
 }
 
 =pod
@@ -847,7 +857,7 @@ sub range {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(range) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->_DOCUMENT_CLASS );
 }
 
 =pod
@@ -910,7 +920,7 @@ sub near {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(near) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->_DOCUMENT_CLASS );
 }
 
 =pod
@@ -978,7 +988,7 @@ sub within {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(within) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->_DOCUMENT_CLASS );
 }
 
 =pod

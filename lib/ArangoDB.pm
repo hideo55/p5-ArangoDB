@@ -38,7 +38,26 @@ sub new {
     Module::Load::load( $CLASS{$api} );
     my $instance_class = $CLASS{$api};
     my $self = bless { connection => $connection, }, $instance_class;
+    if ( $options->{check_version} ) {
+        my $version = $self->server_version;
+        if ( $version !~ /^\Q$api\E/ ) {
+            $class->_server_error_handler( $@, "API version not matched(Server => ${version}, Client => $api)" );
+        }
+    }
     return $self;
+}
+
+sub server_version {
+    my $self = shift;
+    my $version;
+    eval {
+        my $res = $self->{connection}->http_get(API_VERSION);
+        $version = $res->{version};
+    };
+    if ($@) {
+        $self->_server_error_handler( $@, "Failed to get server version" );
+    }
+    return $version;
 }
 
 sub collection {
@@ -48,7 +67,10 @@ sub collection {
 
 sub create {
     my ( $self, $name, $_options ) = @_;
-    my $params = { ( waitForSync => 0, isSystem => 0, ), %{ $_options || {} } };
+    my $params = $_options || {};
+    for my $key ( grep { exists $params->{$_} } qw{isSystem waitForSync} ) {
+        $params->{$key} = $params->{$key} ? JSON::true : JSON::false;
+    }
     $params->{name} = $name;
     my $coll;
     eval {
@@ -59,6 +81,14 @@ sub create {
         $self->_server_error_handler( $@, "Failed to create collection($name)" );
     }
     return $coll;
+}
+
+sub create_document_collection {
+    die 'create_document_collection() should use with API 1.1 or later.';
+}
+
+sub create_edge_collection {
+    die 'create_edge_collection() should use with API 1.1 or later.';
 }
 
 sub find {
@@ -89,7 +119,7 @@ sub collections {
 
 sub query {
     my ( $self, $query ) = @_;
-    return ArangoDB::Statement->new( $self->{connection}, $query );
+    return ArangoDB::Statement->new( $self->{connection}, $query, $self->_DOCUMENT_CLASS );
 }
 
 sub document {
@@ -254,7 +284,15 @@ A callback function to customize name resolution. Takes two arguments: ($hostnam
 
 See L<Furl::HTTP>.
 
+=item check_version
+
+If it is true, check whether the api version of client and server is matched. When failed to check version, throw exception.
+
 =back
+
+=head2 server_version()
+
+Get server version.
 
 =head2 collection($name)
 

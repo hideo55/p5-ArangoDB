@@ -180,10 +180,10 @@ subtest 'explain query' => sub {
 subtest 'cursor' => sub {
     my $db   = ArangoDB->new($config);
     my $conn = $db->{connection};
-    my $cur  = ArangoDB::Cursor->new( $conn, {} );
+    my $cur  = ArangoDB::Cursor->new( $conn, {}, $db->_DOCUMENT_CLASS );
     isa_ok $cur, 'ArangoDB::Cursor';
 
-    $cur = ArangoDB::Cursor->new( $conn, { result => {} } );
+    $cur = ArangoDB::Cursor->new( $conn, { result => {} }, $db->_DOCUMENT_CLASS );
     ok $cur;
 
     $cur = ArangoDB::Cursor->new(
@@ -197,12 +197,13 @@ subtest 'cursor' => sub {
                 },
                 undef,
             ]
-        }
+        },
+        $db->_DOCUMENT_CLASS,
     );
     my $doc = $cur->next;
     isa_ok $doc, 'ArangoDB::Document';
 
-    like exception { $cur->next }, qr/^Invalid argument for ArangoDB\:\:Document/;
+    like exception { $cur->next }, qr/^Invalid argument for ArangoDB/;
 
     pass();
 };

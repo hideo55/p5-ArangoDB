@@ -5,7 +5,6 @@ use utf8;
 use 5.010000;
 use Carp qw(croak);
 use Scalar::Util qw(weaken);
-use ArangoDB::Document;
 use ArangoDB::Constants qw(:api);
 use Class::Accessor::Lite ( ro => [qw/id count length/], );
 
@@ -31,19 +30,20 @@ BEGIN {
 }
 
 sub new {
-    my ( $class, $conn, $cursor ) = @_;
+    my ( $class, $conn, $cursor, $document_class ) = @_;
     my $len = 0;
     if ( defined $cursor->{result} && ref( $cursor->{result} ) eq 'ARRAY' ) {
         $len = scalar @{ $cursor->{result} };
     }
     my $self = bless {
-        connection => $conn,
-        id         => $cursor->{id},
-        length     => $len,
-        count      => $cursor->{count},
-        has_more   => $cursor->{hasMore},
-        position   => 0,
-        result     => $cursor->{result} || [],
+        connection      => $conn,
+        id              => $cursor->{id},
+        length          => $len,
+        count           => $cursor->{count},
+        has_more        => $cursor->{hasMore},
+        position        => 0,
+        result          => $cursor->{result} || [],
+        _document_class => $document_class,
     }, $class;
     if ( $self->{id} ) {
         $self->{_api_path} = API_CURSOR . '/' . $self->{id};
@@ -55,7 +55,7 @@ sub new {
 sub next {
     my $self = shift;
     if ( $self->{position} < $self->{length} || $self->_get_next_batch() ) {
-        return ArangoDB::Document->new( $self->{connection}, _clone( $self->{result}->[ $self->{position}++ ] ) );
+        return $self->{_document_class}->new( $self->{connection}, _clone( $self->{result}->[ $self->{position}++ ] ) );
     }
     return;
 }
@@ -68,7 +68,7 @@ sub all {
         push @result, ( @{ $self->{result} } )[ 0 .. $last ];
     }
     my $conn = $self->{connection};
-    return [ map { ArangoDB::Document->new( $conn, $_ ) } @result ];
+    return [ map { $self->{_document_class}->new( $conn, $_ ) } @result ];
 }
 
 sub _get_next_batch {

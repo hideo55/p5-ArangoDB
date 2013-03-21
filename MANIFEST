@@ -1,5 +1,6 @@
 Build.PL
 Changes
+cpanfile
 eg/arangodb.pl
 lib/ArangoDB.pm
 lib/ArangoDB/AbstractDocument.pm
@@ -7,8 +8,10 @@ lib/ArangoDB/API/V1_0.pm
 lib/ArangoDB/API/V1_0/Collection.pm
 lib/ArangoDB/API/V1_1.pm
 lib/ArangoDB/API/V1_1/Collection.pm
+lib/ArangoDB/API/V1_1/Document.pm
 lib/ArangoDB/API/V1_2.pm
 lib/ArangoDB/API/V1_2/Collection.pm
+lib/ArangoDB/API/V1_2/Document.pm
 lib/ArangoDB/BindVars.pm
 lib/ArangoDB/ClientException.pm
 lib/ArangoDB/Collection.pm
@@ -18,14 +21,17 @@ lib/ArangoDB/Constants.pm
 lib/ArangoDB/Cursor.pm
 lib/ArangoDB/Document.pm
 lib/ArangoDB/Edge.pm
+lib/ArangoDB/Graph.pm
 lib/ArangoDB/Index.pm
 lib/ArangoDB/Index/CapConstraint.pm
+lib/ArangoDB/Index/Fulltext.pm
 lib/ArangoDB/Index/Geo.pm
 lib/ArangoDB/Index/Hash.pm
 lib/ArangoDB/Index/Primary.pm
 lib/ArangoDB/Index/SkipList.pm
 lib/ArangoDB/ServerException.pm
 lib/ArangoDB/Statement.pm
+lib/ArangoDB/Vertex.pm
 MANIFEST			This list of files
 META.json
 META.yml

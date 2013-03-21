@@ -23,8 +23,11 @@
 \.gitignore
 MYMETA\.
 ^cover_db
-^.includepath
+^\.includepath
 ^\_build
 ^Build$
 ^ArangoDB-
 ^MANIFEST\.
+^\.travis.yml
+^\.arangod\.travisci\.sh
+#!include_default

@@ -128,11 +128,21 @@ subtest 'rename collection' => sub {
 subtest 'wait for sync' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('bar');
-    is $coll->wait_for_sync, 0;
+    is $coll->wait_for_sync, 1;
     $coll->wait_for_sync(1);
     is $coll->wait_for_sync, 1;
     $coll->wait_for_sync(0);
     is $coll->wait_for_sync, 0;
+};
+
+subtest 'journal size' => sub {
+    my $db   = ArangoDB->new($config);
+    my $coll = $db->collection('bar');
+    my $size = $coll->journal_size();
+    $coll->journal_size( 1024 * 1024 );
+    is $coll->journal_size, ( 1024 * 1024 );
+    $coll->journal_size($size);
+    is $coll->journal_size, $size;
 };
 
 subtest 'unload and load collection' => sub {
@@ -236,7 +246,6 @@ subtest 'get isVolatile propertie' => sub {
     my $coll = $db->collection('foo');
     ok defined $coll->is_volatile;
 };
-
 
 subtest 'collection type' => sub {
     plan 'skip_all' => 'Tests for API 1.1 or later' if $api_version eq '1.0';

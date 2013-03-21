@@ -1,0 +1,14 @@
+language: perl
+before_script:
+  - ./.arangod.travisci.sh
+env:
+  - TEST_ARANGODB_PORT=8529
+before_install:
+  - perlbrew -f install-cpanm
+  - 'cpanm Module::CPANfile'
+  - "perl -e 'use Module::CPANfile;print $_,$/ for keys %{Module::CPANfile->load(q!cpanfile!)->prereq_specs->{configure}->{requires}}' | cpanm --notest"
+perl:
+  - "5.16"
+  - "5.14"
+  - "5.12"
+  - "5.10"

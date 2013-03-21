@@ -29,14 +29,19 @@ sub fulltext {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(fulltext) for the collection(%s)' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->_DOCUMENT_CLASS );
 }
 
 sub remove_by_example {
     my ( $self, $example, $options ) = @_;
     $options ||= {};
     my $data = { collection => $self->{id}, example => $example, };
-    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit waitForSync);
+    if ( defined $data->{waitForSync} ) {
+        $data->{waitForSync} = $options->{waitForSync} ? JSON::true : JSON::false;
+    }
+    if ( defined $data->{limit} ) {
+        $data->{limit} = $options->{limit};
+    }
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_REMOVE_EXAMPLE, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(remove_by_example) for the collection(%s)' );
@@ -48,6 +53,12 @@ sub replace_by_example {
     my ( $self, $example, $new_value, $options ) = @_;
     $options ||= {};
     my $data = { collection => $self->{id}, example => $example, newValue => $new_value, };
+    if ( defined $data->{waitForSync} ) {
+        $data->{waitForSync} = $options->{waitForSync} ? JSON::true : JSON::false;
+    }
+    if ( defined $data->{limit} ) {
+        $data->{limit} = $options->{limit};
+    }
     map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(limit waitForSync);
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_REPLACE_EXAMPLE, $data ) };
     if ($@) {
@@ -60,7 +71,12 @@ sub update_by_example {
     my ( $self, $example, $new_value, $options ) = @_;
     $options ||= {};
     my $data = { collection => $self->{id}, example => $example, newValue => $new_value, };
-    map { $data->{$_} = $options->{$_} } grep { exists $options->{$_} } qw(keepNull limit waitForSync);
+    for my $key ( grep { exists $options->{$_} } qw{keepNull waitForSync} ) {
+        $data->{$key} = $options->{$key} ? JSON::true : JSON::false;
+    }
+    if ( defined $data->{limit} ) {
+        $data->{limit} = $options->{limit};
+    }
     my $res = eval { $self->{connection}->http_put( API_SIMPLE_UPDATE_EXAMPLE, $data ) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to call Simple API(update_by_example) for the collection(%s)' );

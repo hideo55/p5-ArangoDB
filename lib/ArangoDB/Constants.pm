@@ -10,7 +10,8 @@ my @options = qw(OPTION_ENDPOINT OPTION_HOST OPTION_PORT OPTION_PILICY OPTION_WA
 my @policies = qw(POLICY_LAST PILICY_ERROR);
 my @api = qw(API_DOCUMENT API_COLLECTION API_CURSOR API_EXAMPLE API_EDGE API_QUERY API_SIMPLE_ALL API_SIMPLE_EXAMPLE
     API_SIMPLE_REMOVE_EXAMPLE API_SIMPLE_REPLACE_EXAMPLE API_SIMPLE_UPDATE_EXAMPLE API_SIMPLE_FIRST API_SIMPLE_RANGE
-    API_SIMPLE_NEAR API_SIMPLE_WITHIN API_SIMPLE_FULLTEXT API_INDEX API_IMPORT API_EDGES API_EXPLAIN API_KEY API_KEYS);
+    API_SIMPLE_NEAR API_SIMPLE_WITHIN API_SIMPLE_FULLTEXT API_INDEX API_IMPORT API_EDGES API_EXPLAIN API_KEY API_KEYS
+    API_VERSION API_GRAPH);
 
 my @status          = qw(NEWBORN UNLOADED LOADED BEING_UNLOADED DELETED CORRUPTED);
 my @collection_type = qw(DOCUMENT_COLLECTION EDGE_COLLECTION);
@@ -46,6 +47,7 @@ use constant {
 
 # API
 use constant {
+    API_VERSION                => '/_admin/version',
     API_DOCUMENT               => '/_api/document',
     API_COLLECTION             => '/_api/collection',
     API_CURSOR                 => '/_api/cursor',
@@ -54,9 +56,9 @@ use constant {
     API_KEY                    => '/_api/key/',
     API_KEYS                   => '/_api/keys/',
     API_SIMPLE_EXAMPLE         => '/_api/simple/by-example',
-    API_SIMPLE_REMOVE_EXAMPLE  => '/_api/simple/remove_by-example',
-    API_SIMPLE_REPLACE_EXAMPLE => '/_api/simple/replace_by-example',
-    API_SIMPLE_UPDATE_EXAMPLE  => '/_api/simple/update_by-example',
+    API_SIMPLE_REMOVE_EXAMPLE  => '/_api/simple/remove-by-example',
+    API_SIMPLE_REPLACE_EXAMPLE => '/_api/simple/replace-by-example',
+    API_SIMPLE_UPDATE_EXAMPLE  => '/_api/simple/update-by-example',
     API_QUERY                  => '/_api/query',
     API_EXPLAIN                => '/_api/explain',
     API_INDEX                  => '/_api/index',
@@ -68,6 +70,7 @@ use constant {
     API_SIMPLE_NEAR            => '/_api/simple/near',
     API_SIMPLE_WITHIN          => '/_api/simple/within',
     API_SIMPLE_FULLTEXT        => '/_api/simple/fulltext',
+    API_GRAPH                  => '/_api/graph',
 
 };
 

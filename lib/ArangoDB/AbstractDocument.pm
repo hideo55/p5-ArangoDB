@@ -68,8 +68,8 @@ sub fetch {
     if ($@) {
         $self->_server_error_handler( $@, 'fetch' );
     }
-    if ( !defined $res || ref($res) eq 'HASH' ) {
-        $self->{_rev} = delete $res->{_rev};
+    if ( defined $res && ref($res) eq 'HASH' ) {
+        $self->{_rev} = CORE::delete $res->{_rev};
         $self->{document} = { map { $_ => $res->{$_} } grep { $_ !~ /^_/ } keys %$res };
     }
     return $self;

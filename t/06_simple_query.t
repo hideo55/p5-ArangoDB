@@ -232,10 +232,10 @@ subtest 'simple query - fulltext' => sub {
 
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('test6');
-    $coll->save( { name => 'foo bar',      x => { a => 1, b => 2 } } );
+    $coll->save( { name => 'foo bar',       x => { a => 1, b => 2 } } );
     $coll->save( { name => 'bar xxx foo',   x => { a => 2, b => 2 } } );
-    $coll->save( { name => 'baz',          x => { a => 3, b => 2 } } );
-    $coll->save( { name => 'qux',          x => { b => 1, a => 1 } } );
+    $coll->save( { name => 'baz',           x => { a => 3, b => 2 } } );
+    $coll->save( { name => 'qux',           x => { b => 1, a => 1 } } );
     $coll->save( { name => 'xxx foo x qux', x => { b => 1, a => 1 } } );
     my $index = $coll->ensure_fulltext_index('name');
 
@@ -255,6 +255,113 @@ subtest 'simple query - fulltext' => sub {
     };
     like $e, qr/^Failed to call Simple API\(fulltext\) for the collection/;
 
+};
+
+subtest 'simple query - remove_by_example' => sub {
+    my $db = ArangoDB->new($config);
+
+    my $coll = $db->collection('test7');
+    $coll->save( { name => 'foo', x => { a => 1, b => 2 } } );
+    $coll->save( { name => 'bar', x => { a => 2, b => 2 } } );
+    $coll->save( { name => 'baz', x => { a => 3, b => 2 } } );
+    $coll->save( { name => 'qux', x => { b => 1, a => 1 } } );
+
+    my $deleted = $coll->remove_by_example( { "x.a" => 1 } );
+    is $deleted, 2;
+
+    my $cur = $coll->all();
+    my @docs;
+    while ( my $doc = $cur->next ) {
+        push @docs, $doc->content;
+    }
+    my $expect = [ { name => 'bar', x => { a => 2, b => 2 } }, { name => 'baz', x => { a => 3, b => 2 } }, ];
+
+    is_deeply( [ sort { $a->{name} cmp $b->{name} } @docs ], $expect );
+
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection', { http_put => sub {die}, } );
+        $db->collection('test7')->remove_by_example( { "x.a" => 1 } );
+    };
+    like $e, qr/^Failed to call Simple API\(remove_by_example\) for the collection/;
+};
+
+subtest 'simple query - replace_by_example' => sub {
+    my $db = ArangoDB->new($config);
+
+    my $coll = $db->collection('test8');
+    $coll->save( { name => 'foo', x => { a => 1, b => 2 } } );
+    $coll->save( { name => 'bar', x => { a => 2, b => 2 } } );
+    $coll->save( { name => 'baz', x => { a => 3, b => 2 } } );
+    $coll->save( { name => 'qux', x => { b => 1, a => 1 } } );
+
+    my $replaced = $coll->replace_by_example( { "x.a" => 1 }, { name => 'abc' } );
+    is $replaced, 2;
+
+    my $cur = $coll->all();
+    my @docs;
+    while ( my $doc = $cur->next ) {
+        push @docs, $doc->content;
+    }
+    my $expect = [
+        { name => 'abc' },
+        { name => 'abc' },
+        { name => 'bar', x => { a => 2, b => 2 } },
+        { name => 'baz', x => { a => 3, b => 2 } },
+    ];
+    is_deeply( [ sort { $a->{name} cmp $b->{name} } @docs ], $expect );
+
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection', { http_put => sub {die}, } );
+        $db->collection('test8')->replace_by_example( { "x.a" => 1 } );
+    };
+    like $e, qr/^Failed to call Simple API\(replace_by_example\) for the collection/;
+};
+
+subtest 'simple query - update_by_example' => sub {
+    my $db = ArangoDB->new($config);
+
+    my $coll = $db->collection('test9');
+    $coll->save( { name => 'foo', x => { a => 1, b => 2 } } );
+    $coll->save( { name => 'bar', x => { a => 2, b => 2 } } );
+    $coll->save( { name => 'baz', x => { a => 3, b => 2 } } );
+    $coll->save( { name => 'qux', x => { b => 1, a => 1 } } );
+
+    my $updated = $coll->update_by_example( { "x.b" => 1 }, { name => 'abc', x => { b => undef } }, { keepNull => 1 } );
+    is $updated, 1;
+
+    my $cur = $coll->all();
+    my @docs;
+    while ( my $doc = $cur->next ) {
+        push @docs, $doc->content;
+    }
+    my $expect = [
+        { name => 'abc', x => { b => undef, a => 1 } },
+        { name => 'bar', x => { a => 2,     b => 2 } },
+        { name => 'baz', x => { a => 3,     b => 2 } },
+        { name => 'foo', x => { a => 1,     b => 2 } },
+    ];
+    is_deeply( [ sort { $a->{name} cmp $b->{name} } @docs ], $expect );
+
+    $coll->update_by_example( { "x.a" => 1 }, { name => 'foo', x => { b => undef } } );
+    $cur  = $coll->all();
+    @docs = ();
+    while ( my $doc = $cur->next ) {
+        push @docs, $doc->content;
+    }
+    $expect = [
+        { name => 'bar', x => { a => 2, b        => 2 } },
+        { name => 'baz', x => { a => 3, b        => 2 } },
+        { name => 'foo', x => { a => 1 } },
+        { name => 'foo', x => { a => 1 } },
+
+    ];
+    is_deeply( [ sort { $a->{name} cmp $b->{name} } @docs ], $expect );
+
+    my $e = exception {
+        my $guard = mock_guard( 'ArangoDB::Connection', { http_put => sub {die}, } );
+        $db->collection('test8')->update_by_example( { "x.a" => 1 } );
+    };
+    like $e, qr/^Failed to call Simple API\(update_by_example\) for the collection/;
 };
 
 done_testing;

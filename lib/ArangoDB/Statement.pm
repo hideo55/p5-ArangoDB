@@ -15,11 +15,12 @@ use overload
     fallback => 1;
 
 sub new {
-    my ( $class, $conn, $query ) = @_;
+    my ( $class, $conn, $query, $doc_class ) = @_;
     my $self = bless {
-        connection => $conn,
-        query      => $query,
-        bind_vars  => ArangoDB::BindVars->new(),
+        connection      => $conn,
+        query           => $query,
+        bind_vars       => ArangoDB::BindVars->new(),
+        _document_class => $doc_class,
     }, $class;
     weaken( $self->{connection} );
     return $self;
@@ -32,7 +33,7 @@ sub execute {
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to execute query' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, $self->{_document_class} );
 }
 
 sub parse {

@@ -20,18 +20,11 @@ isa_ok $db, 'ArangoDB';
 isa_ok $db, 'ArangoDB::API::V1_0';
 ok exception { $db->find('foo') };
 
-$db = ArangoDB->new(
-    {   api => '1.1',
-    }
-);
+$db = ArangoDB->new( { api => '1.1', } );
 isa_ok $db, 'ArangoDB::API::V1_1';
 
-$db = ArangoDB->new(
-    {   api => '1.2',
-    }
-);
+$db = ArangoDB->new( { api => '1.2', } );
 isa_ok $db, 'ArangoDB::API::V1_2';
-
 
 lives_ok {
     ArangoDB->new();
@@ -134,5 +127,36 @@ like exception {
 like exception {
     ArangoDB->new( { 'inet_aton' => {}, } );
 }, qr/^inet_aton should be a CODE reference/;
+
+like exception {
+    ArangoDB->new( { api => '2.0' } );
+}, qr/^\Q'api' must be 1.0, 1.1 or 1.2\E/;
+
+subtest 'check server version' => sub {
+    plan 'skip_all' => 'Server not found' if !$ENV{TEST_ARANGODB_PORT};
+    my $api_version = $ENV{TEST_ARANGODB_VERSION};
+    my $port        = $ENV{TEST_ARANGODB_PORT};
+    my $config      = {
+        host          => 'localhost',
+        port          => $port,
+        keep_alive    => 1,
+        api           => $api_version,
+        check_version => 1,
+    };
+    lives_ok {
+        my $db = ArangoDB->new($config);
+        like $db->server_version(), qr/^\Q$api_version\E/;
+    };
+
+    my $wrong_version = {
+        '1.0' => '1.1',
+        '1.1' => '1.2',
+        '1.2' => '1.0',
+    };
+    $config->{api} = $wrong_version->{$api_version};
+    like exception {
+        ArangoDB->new($config);
+    }, qr/^API version not matched/;
+};
 
 done_testing;
