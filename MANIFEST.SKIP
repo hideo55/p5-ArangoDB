@@ -30,4 +30,4 @@ MYMETA\.
 ^MANIFEST\.
 ^\.travis.yml
 ^\.arangod\.travisci\.sh
-#!include_default
+
