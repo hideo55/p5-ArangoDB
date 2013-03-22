@@ -3,6 +3,7 @@ before_script:
   - ./.arangod.travisci.sh
 env:
   - TEST_ARANGODB_PORT=8529
+  - TEST_ARANGODB_VERSION=1.2
 before_install:
   - perlbrew -f install-cpanm
   - cpanm Module::CPANfile
