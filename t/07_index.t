@@ -75,6 +75,7 @@ subtest 'skiplist index' => sub {
     $coll->save( { foo => 10, } );
 
     my $index1 = $coll->ensure_skiplist( [qw/foo/] );
+    diag $index1;
     isa_ok $index1, 'ArangoDB::Index::SkipList';
     is $index1->type, 'skiplist';
     is_deeply $index1->fields, [qw/foo/];
