@@ -69,15 +69,10 @@ subtest 'unique hash index' => sub {
 subtest 'skiplist index' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test3');
-    my $doc;
-    $doc = $coll->save( { foo => 1, } );
-    diag $doc->id;
-    $doc = $coll->save( { foo => 2, } );
-    diag $doc->id;
-    $doc = $coll->save( { foo => 3, } );
-    diag $doc->id;
-    $doc = $coll->save( { foo => 10, } );
-    diag $doc->id;
+    $coll->save( { foo => 1, } );
+    $coll->save( { foo => 2, } );
+    $coll->save( { foo => 3, } );
+    $coll->save( { foo => 10, } );
 
     my $index1 = $coll->ensure_skiplist( [qw/foo/] );
     isa_ok $index1, 'ArangoDB::Index::SkipList';
@@ -93,10 +88,15 @@ subtest 'skiplist index' => sub {
 subtest 'unique skiplist index' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test4');
-    $coll->save( { foo => 1, } );
-    $coll->save( { foo => 2, } );
-    $coll->save( { foo => 3, } );
-    $coll->save( { foo => 10, } );
+    my $doc;
+    $doc = $coll->save( { foo => 1, } );
+    diag $doc;
+    $doc = $coll->save( { foo => 2, } );
+    diag $doc;
+    $doc = $coll->save( { foo => 3, } );
+    diag $doc;
+    $doc = $coll->save( { foo => 10, } );
+    diag $doc;
 
     my $index1 = $coll->ensure_unique_skiplist( [qw/foo/] );
     isa_ok $index1, 'ArangoDB::Index::SkipList';
@@ -182,13 +182,13 @@ subtest 'CAP constraint' => sub {
 
 subtest 'Fulltext index' => sub {
     plan 'skip_all' => 'Tests for API 1.2 or later' if $api_version ne '1.2';
-    my $db   = ArangoDB->new($config);
-    my $coll = $db->collection('index_test8');
-    my $index  = $coll->ensure_fulltext_index('name');
+    my $db    = ArangoDB->new($config);
+    my $coll  = $db->collection('index_test8');
+    my $index = $coll->ensure_fulltext_index('name');
     isa_ok $index, 'ArangoDB::Index::Fulltext';
     my $id = 0;
-    $coll->save({ id => $id++, name => 'fooooooo' });
-    
+    $coll->save( { id => $id++, name => 'fooooooo' } );
+
     my $index2 = $db->index($index);
     isa_ok $index2, 'ArangoDB::Index::Fulltext';
 
