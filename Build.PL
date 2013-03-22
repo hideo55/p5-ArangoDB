@@ -30,12 +30,13 @@ $class->new(
     },
     configure_requires => $prereq->{configure}->{requires},
     requires           => $prereq->{runtime}->{requires},
-    recommends         => { 'Data::Clone' => 0, },
+    recommends         => $prereq->{runtime}->{recommends},
     no_index           => { 'directory' => [ 't', 'xt', 'inc', 'eg' ] },
     test_files => ( -d '.git' || $ENV{RELEASE_TESTING} ) ? [qw(t/ xt/)] : ['t/'],
-    create_readme  => 1,
-    add_to_cleanup => ['ArangoDB-*'],
-    meta_merge     => {
+    create_readme   => 1,
+    create_makefile => 'small',
+    add_to_cleanup  => ['ArangoDB-*'],
+    meta_merge      => {
         keywords  => [qw/arngodb database/],
         resources => {
             repository => 'git://github.com/hideo55/p5-ArangoDB.git',

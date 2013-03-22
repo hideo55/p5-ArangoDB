@@ -93,6 +93,13 @@ METHODS
 
         See Furl::HTTP.
 
+    check_version
+        If it is true, check whether the api version of client and server is
+        matched. When failed to check version, throw exception.
+
+  server_version()
+    Get server version.
+
   collection($name)
     Get or create a collection based on $name. Returns instance of
     ArangoDB::Collection.
