@@ -13,7 +13,7 @@ sub ACTION_test {
     my $prove = App::Prove->new();
     my @args = qw(--lib -Pt::lib::Prove::Plugin::StartArangoDB);
     $prove->process_args(@args, @{$self->{properties}{test_files}});
-    $prove->run();
+    exit( $prove->run() ? 0 : 1);
 }
 END_OF_CODE
 
