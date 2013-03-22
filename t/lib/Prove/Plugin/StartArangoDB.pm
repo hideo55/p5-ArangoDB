@@ -30,11 +30,17 @@ sub load {
                 my $port = shift;
                 diag "Starting arangod($version) on 127.0.0.1:$port";
                 my $dir = $TMP_DIR->dirname;
+                my $cmd = join ' ', (
+                    'arangod',
+                    ' --server.disable-admin-interface true',
+                    ' --server.disable-authentication true',
+                    "--database.directory $dir",
+                );
                 if ( $ENV{TEST_ARANGODB_VERSION} eq '1.0' ) {
-                    exec "arangod --server.http-port $port $dir";
+                    exec "${cmd} --server.http-port $port ";
                 }
                 else {
-                    exec "arangod --server.endpoint tcp://127.0.0.1:$port $dir";
+                    exec "${cmd} --server.endpoint tcp://127.0.0.1:$port";
                 }
             }
         );

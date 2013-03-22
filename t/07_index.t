@@ -25,6 +25,7 @@ sub init {
 }
 
 subtest 'hash index' => sub {
+    diag 'hash index';
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test1');
     $coll->save( { foo => 1, bar => { a => 1, b => 1 } } );
@@ -48,6 +49,7 @@ subtest 'hash index' => sub {
 };
 
 subtest 'unique hash index' => sub {
+    diag 'unique hash index';
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test2');
     $coll->save( { foo => 1, bar => { a => 1, b => 1 } } );
@@ -67,6 +69,7 @@ subtest 'unique hash index' => sub {
 };
 
 subtest 'skiplist index' => sub {
+    diag 'skiplist index';
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test3');
     $coll->save( { foo => 1, } );
@@ -86,6 +89,7 @@ subtest 'skiplist index' => sub {
 };
 
 subtest 'unique skiplist index' => sub {
+    diag 'unique skiplist index';
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test4');
     $coll->save( { foo => 1, } );
@@ -107,6 +111,7 @@ subtest 'unique skiplist index' => sub {
 };
 
 subtest 'geo index' => sub {
+    diag 'geo index';
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test5');
     my $id   = 0;
@@ -135,6 +140,7 @@ subtest 'geo index' => sub {
 };
 
 subtest 'geo constraint' => sub {
+    diag 'geo constraint';
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test6');
     my $id   = 0;
@@ -158,6 +164,7 @@ subtest 'geo constraint' => sub {
 };
 
 subtest 'CAP constraint' => sub {
+    diag 'CAP constraint';
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test7');
     my $cap  = $coll->ensure_cap_constraint(10);
@@ -177,6 +184,7 @@ subtest 'CAP constraint' => sub {
 
 subtest 'Fulltext index' => sub {
     plan 'skip_all' => 'Tests for API 1.2 or later' if $api_version ne '1.2';
+    diag 'Fulltext index';
     my $db   = ArangoDB->new($config);
     my $coll = $db->collection('index_test8');
     my $index  = $coll->ensure_fulltext_index('name');
