@@ -5,6 +5,8 @@ env:
   - TEST_ARANGODB_PORT=8529
 before_install:
   - perlbrew -f install-cpanm
+  - cpanm Module::CPANfile
+  - perl -e 'use Module::CPANfile;print $_,$/ for keys %{Module::CPANfile->load(q!cpanfile!)->prereq_specs->{test}->{requires}}' | cpanm --notest
 perl:
   - "5.16"
   - "5.14"
