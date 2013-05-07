@@ -1,4 +1,5 @@
 #!perl
+requires 'perl'                  => '5.010000';
 requires 'parent'                => 0;
 requires 'Scalar::Util'          => '1.19';
 requires 'Class::Accessor::Lite' => '0.05';

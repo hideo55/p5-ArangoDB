@@ -75,7 +75,6 @@ subtest 'skiplist index' => sub {
     $coll->save( { foo => 10, } );
 
     my $index1 = $coll->ensure_skiplist( [qw/foo/] );
-    diag $index1;
     isa_ok $index1, 'ArangoDB::Index::SkipList';
     is $index1->type, 'skiplist';
     is_deeply $index1->fields, [qw/foo/];
@@ -89,15 +88,10 @@ subtest 'skiplist index' => sub {
 subtest 'unique skiplist index' => sub {
     my $db   = ArangoDB->new($config);
     my $coll = $db->create('index_test4');
-    my $doc;
-    $doc = $coll->save( { foo => 1, } );
-    diag $doc;
-    $doc = $coll->save( { foo => 2, } );
-    diag $doc;
-    $doc = $coll->save( { foo => 3, } );
-    diag $doc;
-    $doc = $coll->save( { foo => 10, } );
-    diag $doc;
+    $coll->save( { foo => 1, } );
+    $coll->save( { foo => 2, } );
+    $coll->save( { foo => 3, } );
+    $coll->save( { foo => 10, } );
 
     my $index1 = $coll->ensure_unique_skiplist( [qw/foo/] );
     isa_ok $index1, 'ArangoDB::Index::SkipList';

@@ -10,6 +10,7 @@ my %INNER_CLASSES = map { $_ => 1 } qw/
     ArangoDB::Connection
     ArangoDB::ConnectOptions
     ArangoDB::Constants
+    ArangoDB::Graph::Element
     ArangoDB::Index
     ArangoDB::ServerException
     ArangoDB::API::V1_0

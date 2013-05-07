@@ -8,6 +8,8 @@ use Scalar::Util qw(weaken);
 use ArangoDB::Constants qw(:api);
 use Class::Accessor::Lite ( ro => [qw/id count length/], );
 
+our $VERSION = '0.08';
+
 BEGIN {
     if ( eval { require Data::Clone; 1; } ) {
         *_clone = \&Data::Clone::clone;

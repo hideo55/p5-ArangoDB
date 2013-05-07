@@ -8,6 +8,8 @@ use overload
     q{""}    => sub { $_[0]->message },
     fallback => 1;
 
+our $VERSION = '0.08';
+
 sub new {
     my ( $class, $message ) = @_;
     my @caller_info = caller;

@@ -6,6 +6,8 @@ use 5.010000;
 use parent 'ArangoDB::Index';
 use Class::Accessor::Lite ( ro => [qw/fields unique/], );
 
+our $VERSION = '0.08';
+
 1;
 __END__
 

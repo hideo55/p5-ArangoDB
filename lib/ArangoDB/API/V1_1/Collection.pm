@@ -8,6 +8,8 @@ use constant {
     _DOCUMENT_CLASS => 'ArangoDB::API::V1_1::Document',
 };
 
+our $VERSION = '0.08';
+
 sub new {
     my ( $class, $db, $raw_collection ) = @_;
     my $self = $class->SUPER::new( $db, $raw_collection );

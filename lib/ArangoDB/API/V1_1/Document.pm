@@ -4,6 +4,8 @@ use warnings;
 use 5.010000;
 use parent 'ArangoDB::Document';
 
+our $VERSION = '0.08';
+
 sub partial_update {
     my ( $self, $value, $keep_null ) = @_;
     if (defined $keep_null) {

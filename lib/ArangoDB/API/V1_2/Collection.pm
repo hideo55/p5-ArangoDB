@@ -7,6 +7,8 @@ use ArangoDB::Constants qw(:api :collection_type);
 use ArangoDB::Index::Fulltext;
 use constant { _DOCUMENT_CLASS => 'ArangoDB::API::V1_2::Document', };
 
+our $VERSION = '0.08';
+
 sub is_volatile {
     my $self = shift;
     my $res  = $self->_get_from_this('properties');

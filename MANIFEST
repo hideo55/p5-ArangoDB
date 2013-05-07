@@ -22,6 +22,9 @@ lib/ArangoDB/Cursor.pm
 lib/ArangoDB/Document.pm
 lib/ArangoDB/Edge.pm
 lib/ArangoDB/Graph.pm
+lib/ArangoDB/Graph/Edge.pm
+lib/ArangoDB/Graph/Element.pm
+lib/ArangoDB/Graph/Vertex.pm
 lib/ArangoDB/Index.pm
 lib/ArangoDB/Index/CapConstraint.pm
 lib/ArangoDB/Index/Fulltext.pm
@@ -31,7 +34,6 @@ lib/ArangoDB/Index/Primary.pm
 lib/ArangoDB/Index/SkipList.pm
 lib/ArangoDB/ServerException.pm
 lib/ArangoDB/Statement.pm
-lib/ArangoDB/Vertex.pm
 MANIFEST			This list of files
 META.json
 META.yml

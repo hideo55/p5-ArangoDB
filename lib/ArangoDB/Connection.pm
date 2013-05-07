@@ -10,6 +10,8 @@ use ArangoDB::ConnectOptions;
 use ArangoDB::ServerException;
 use Class::Accessor::Lite ( ro => [qw/options/] );
 
+our $VERSION = '0.08';
+
 my $JSON = JSON->new->utf8;
 
 sub new {

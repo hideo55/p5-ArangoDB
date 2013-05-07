@@ -12,6 +12,8 @@ use constant {
 use ArangoDB::API::V1_1::Collection;
 use ArangoDB::API::V1_1::Document;
 
+our $VERSION = '0.08';
+
 sub create_document_collection {
     my ( $self, $name, $_options ) = @_;
     $_options ||= {};

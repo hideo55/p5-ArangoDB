@@ -7,10 +7,11 @@ use Carp qw(croak);
 use Scalar::Util qw(weaken);
 use ArangoDB::Constants qw(:api);
 use Class::Accessor::Lite ( ro => [qw/id collection_id type/] );
-
 use overload
     q{""}    => sub { $_[0]->id },
     fallback => 1;
+
+our $VERSION = '0.08';
 
 sub new {
     my ( $class, $conn, $params ) = @_;

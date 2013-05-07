@@ -4,10 +4,13 @@ use warnings;
 use utf8;
 use 5.010000;
 use ArangoDB::Constants qw(:api);
-use ArangoDB::Vertex;
+use ArangoDB::Graph::Vertex;
+use ArangoDB::Graph::Edge;
 use overload
     q{""}    => sub { shift->name },
     fallback => 1;
+
+our $VERSION = '0.08';
 
 sub new {
     my ( $class, $conn, $graph ) = @_;
@@ -70,7 +73,7 @@ sub get_vertex {
     my $vertex;
     eval {
         my $res = $self->{connection}->http_get($api);
-        $vertex = ArangoDB::Vertex->new( $self->{connection}, $res->{vertex} );
+        $vertex = ArangoDB::Graph::Vertex->new( $self->{connection}, $res->{vertex} );
     };
     if ($@) {
         $self->_vertex_error_handler( $@, 'get' );
@@ -84,7 +87,7 @@ sub save_vertex {
     my $vertex;
     eval {
         my $res = $self->{connection}->http_post( $api, { _key => $name, %{ $optional || {} } } );
-        $vertex = ArangoDB::Vertex->new( $self->{connection}, $res->{vertex} );
+        $vertex = ArangoDB::Graph::Vertex->new( $self->{connection}, $res->{vertex} );
     };
     if ($@) {
         $self->_vertex_error_handler( $@, 'save' );
@@ -92,76 +95,56 @@ sub save_vertex {
     return $vertex;
 }
 
-sub replace_vertex {
-    my ( $self, $name, $optional ) = @_;
-    my $api = $self->_api_path . '/vertex/' . $name;
-    my $vertex;
-    eval {
-        my $res = $self->{connection}->http_put( $api, $optional || {} );
-        $vertex = ArangoDB::Vertex->new( $self->{connection}, $res->{vertex} );
-    };
-    if ($@) {
-        $self->_vertex_error_handler( $@, 'replace' );
-    }
-    return $vertex;
-}
-
-sub update_vertex {
-    my ( $self, $name, $optional ) = @_;
-    my $api = $self->_api_path . '/vertex/' . $name;
-    my $vertex;
-    eval {
-        my $res = $self->{connection}->http_patch( $api, $optional || {} );
-        $vertex = ArangoDB::Vertex->new( $self->{connection}, $res->{vertex} );
-    };
-    if ($@) {
-        $self->_vertex_error_handler( $@, 'update' );
-    }
-    return $vertex;
-}
-
-sub delete_vertex {
-    my ( $self, $name, $optional ) = @_;
-    my $api = $self->_api_path . '/vertex/' . $name;
-    eval { $self->{connection}->http_delete($api); };
-    if ($@) {
-        $self->_vertex_error_handler( $@, 'delete' );
-    }
-    return $self;
-}
-
 sub get_neighbor_vertices {
     my ( $self, $name ) = @_;
     my $api = $self->_api_path . '/vertices/' . $name;
-    my $res = eval { $self->{connection}->http_post( $api ) };
+    my $res = eval { $self->{connection}->http_post($api) };
     if ($@) {
         $self->_server_error_handler( $@, 'Failed to execute query' );
     }
-    return ArangoDB::Cursor->new( $self->{connection}, $res );
+    return ArangoDB::Cursor->new( $self->{connection}, $res, 'ArangoDB::Graph::Vertex' );
 }
 
 sub get_edge {
-
+    my ( $self, $name ) = @_;
+    my $api = $self->_api_path . '/edge/' . $name;
+    my $edge;
+    eval {
+        my $res = $self->{connection}->http_get($api);
+        $edge = ArangoDB::Graph::Edge->new( $self->{connection}, $res->{edge} );
+    };
+    if ($@) {
+        $self->_edge_error_handler( $@, 'get' );
+    }
+    return $edge;
 }
 
 sub save_edge {
-
-}
-
-sub replace_edge {
-
-}
-
-sub update_edge {
-
-}
-
-sub delete_edge {
-
+    my ( $self, $name, $from, $to, $label, $optional ) = @_;
+    my $api = $self->_api_path . '/edge';
+    my $edge;
+    my $params = { _key => $name, _from => $from, _to => $to, %{ $optional || {} } };
+    if ($label) {
+        $params->{'$label'} = $label;
+    }
+    eval {
+        my $res = $self->{connection}->http_post( $api, $params );
+        $edge = ArangoDB::Graph::Edge->new( $self->{connection}, $res->{edge} );
+    };
+    if ($@) {
+        $self->_edge_error_handler( $@, 'save' );
+    }
+    return $edge;
 }
 
 sub get_connected_edges {
-
+    my ( $self, $vertex_name ) = @_;
+    my $api = $self->_api_path . '/edges/' . $vertex_name;
+    my $res = eval { $self->{connection}->http_post($api) };
+    if ($@) {
+        $self->_server_error_handler( $@, 'Failed to execute query' );
+    }
+    return ArangoDB::Cursor->new( $self->{connection}, $res, 'ArangoDB::Graph::Edge' );
 }
 
 sub _api_path {
@@ -238,29 +221,21 @@ Delete the graph from database.
 
 =head2 vertices()
 
+Get the name of the vertices(documents) collection.
+
 =head2 edges()
+
+Get the name of the edges collection,
 
 =head2 get_vertex()
 
 =head2 save_vertex()
-
-=head2 replace_vertex()
-
-=head2 update_vertex()
-
-=head2 delete_vertex()
 
 =head2 get_neighbor_vertices()
 
 =head2 get_edge()
 
 =head2 save_edge()
-
-=head2 replace_edge()
-
-=head2 update_edge()
-
-=head2 delete_edge()
 
 =head2 get_connected_edges()
 

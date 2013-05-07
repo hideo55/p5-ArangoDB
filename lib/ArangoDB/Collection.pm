@@ -25,6 +25,8 @@ use overload
     q{""}    => sub { shift->id },
     fallback => 1;
 
+our $VERSION = '0.08';
+
 my $JSON = JSON->new->utf8;
 
 =pod

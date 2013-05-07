@@ -8,6 +8,8 @@ use parent 'ArangoDB::AbstractDocument';
 use ArangoDB::Constants qw(:api);
 use ArangoDB::Edge;
 
+our $VERSION = '0.08';
+
 sub new {
     my $class = shift;
     my $self  = $class->SUPER::new(@_);

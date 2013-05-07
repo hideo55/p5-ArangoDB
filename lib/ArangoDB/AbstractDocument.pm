@@ -9,6 +9,8 @@ use overload
     q{""}    => sub { shift->document_handle },
     fallback => 1;
 
+our $VERSION = '0.08';
+
 sub new {
     my ( $class, $conn, $doc ) = @_;
     die "Invalid argument for $class : undef" unless defined $doc;
@@ -22,7 +24,9 @@ sub new {
         $self->{_document_handle} = $id;
         $self->{_rev}             = $rev;
     }
-    map { $self->{$_} = CORE::delete $doc->{$_} } grep {/^_/} keys %$doc;
+    for my $key ( grep {/^_/} keys %$doc ) {
+        $self->{$key} = CORE::delete $doc->{$key};
+    }
     $self->{document} = $doc;
     return $self;
 }

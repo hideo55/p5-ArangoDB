@@ -1,11 +1,25 @@
-package ArangoDB::Edge;
+package ArangoDB::Graph::Edge;
 use strict;
 use warnings;
 use utf8;
 use 5.010000;
 use Carp qw(croak);
-use parent 'ArangoDB::AbstractDocument';
+use parent 'ArangoDB::Graph::Element';
 use ArangoDB::Constants qw(:api);
+
+our $VERSION = '0.08';
+
+sub new {
+    my ( $class, $conn, $graph_id, $edge ) = @_;
+    my $label = CORE::delete $edge->{'$label'};
+    my $self = $class->SUPER::new( $conn, $graph_id, $edge );
+    $self->{'$label'} = $label;
+    return $self;
+}
+
+sub label {
+    $_[0] => {'$label'};
+}
 
 sub from {
     return $_[0]->{_from};
@@ -17,7 +31,7 @@ sub to {
 
 sub _api_path {
     my $self = shift;
-    return API_EDGE . '/' . $self;
+    return API_GRAPH . '/' . $self->{_graph} . '/edge/' . $self->name;
 }
 
 # Handling server error
@@ -37,11 +51,11 @@ __END__
 
 =head1 NAME
 
-ArangoDB::Edge - An ArangoDB edge
+ArangoDB::Graph::Edge - An ArangoDB edge
 
 =head1 DESCRIPTION
 
-Instance of ArangoDB edge.
+Instance of ArangoDB edge(edge of graph).
 
 =head1 METHODS
 
@@ -80,10 +94,8 @@ Fetch the edge data from database.
 =head2 save()
 
 Save the changes of edge to database.
-i
-=head2 partial_update($value[,$keep_null])
 
-[API 1.1 or later]
+head2 partial_update($value[,$keep_null])
 
 Partially updates the edge.
 

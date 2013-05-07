@@ -14,6 +14,8 @@ use overload
     q{""}    => sub { $_[0]->{query} },
     fallback => 1;
 
+our $VERSION = '0.08';
+
 sub new {
     my ( $class, $conn, $query, $doc_class ) = @_;
     my $self = bless {

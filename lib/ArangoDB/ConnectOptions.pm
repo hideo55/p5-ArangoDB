@@ -6,6 +6,8 @@ use 5.010000;
 use Data::Util qw(:check);
 use List::MoreUtils qw(none);
 
+our $VERSION = '0.08';
+
 sub new {
     my ( $class, $options ) = @_;
 

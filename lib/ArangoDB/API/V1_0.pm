@@ -10,5 +10,7 @@ use constant {
 };
 use ArangoDB::API::V1_0::Collection;
 
+our $VERSION = '0.08';
+
 1;
 __END__
