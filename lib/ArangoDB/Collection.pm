@@ -63,7 +63,7 @@ sub new {
 
 =head2 id()
 
-Returns identifer of the collection.
+Returns identifier of the collection.
 
 =head2 status()
 
@@ -443,7 +443,7 @@ sub save {
 
 =pod
 
-=head2 bulk_import($header,$body)
+=head2 bulk_import( $header, $body )
 
 Import multiple documents at once.
 
@@ -520,7 +520,7 @@ sub bulk_import_self_contained {
 
 =head1 METHODS FOR EDGE HANDLING
 
-=head2 save_edge($from,$to[,$data])
+=head2 save_edge( $from, $to [,$data] )
 
 Save edge to the collection. Returns instance of L<ArangoDB::Edge>.
 
@@ -601,7 +601,7 @@ sub all {
 
 =pod
 
-=head2 by_example($example[,$options])
+=head2 by_example( $example [,$options] )
 
 Send 'by_example' simple query. Returns instance of L<ArangoDB::Cursor>.
 
@@ -613,7 +613,7 @@ This will find all documents matching a given example.
 
 =item $example
 
-The exmaple.
+The example.
 
 =item $options
 
@@ -649,7 +649,7 @@ sub by_example {
 
 =pod
 
-=head2 remove_by_example($example[,$options])
+=head2 remove_by_example( $example [,$options] )
 
 Send 'remove_by_example' simple query. Returns the number of documents that were deleted.
 
@@ -661,7 +661,7 @@ This will delete all documents matching a given example.
 
 =item $example
 
-The exmaple.
+The example.
 
 =item $options
 
@@ -689,7 +689,7 @@ sub remove_by_example {
 
 =pod
 
-=head2 replace_by_example($example,$new_value[,$options])
+=head2 replace_by_example( $example, $new_value [,$options] )
 
 Send 'replace_by_example' simple query. Returns the number of documents that were replaced.
 
@@ -701,7 +701,7 @@ This will replace all documents matching a given example.
 
 =item $example
 
-The exmaple.
+The example.
 
 =item $new_value
 
@@ -731,7 +731,7 @@ sub replace_by_example;
 
 =pod
 
-=head2 update_by_example($example,$new_value[,$options])
+=head2 update_by_example( $example, $new_value [,$options] )
 
 Send 'update_by_example' simple query. Returns the number of documents that were updated.
 
@@ -743,7 +743,7 @@ This will update all documents matching a given example.
 
 =item $example
 
-The exmaple.
+The example.
 
 =item $new_value
 
@@ -783,7 +783,7 @@ Send 'first_example' simple query. Returns instance of L<ArangoDB::Document>.
 
 This will return the first document matching a given example.
 
-$example is the exmaple.
+$example is the example.
 
     my $document = $collection->by_example({ age => 20 });
 
@@ -801,7 +801,7 @@ sub first_example {
 
 =pod
 
-=head2 range($attr,$lower,$upper[,$options])
+=head2 range( $attr, $lower, $upper [,$options] )
 
 Send 'range' simple query. Returns instance of L<ArangoDB::Cursor>.
 
@@ -833,7 +833,7 @@ Query option(HASH reference).The attributes of $options are:
 
 =item closed
 
-If true, use intervall including $lower and $upper, otherwise exclude $upper, but include $lower
+If true, use interval including $lower and $upper, otherwise exclude $upper, but include $lower
 
 =item limit
 
@@ -864,7 +864,7 @@ sub range {
 
 =pod
 
-=head2 near($latitude,$longitude[,$options])
+=head2 near( $latitude, $longitude [,$options] )
 
 Send 'near' simple query. Returns instance of L<ArangoDB::Cursor>.
 
@@ -927,7 +927,7 @@ sub near {
 
 =pod
 
-=head2 within($latitude,$longitude,$radius[,$options])
+=head2 within( $latitude, $longitude, $radius [,$options] )
 
 Send 'within' simple query. Returns instance of L<ArangoDB::Cursor>.
 
@@ -995,7 +995,7 @@ sub within {
 
 =pod
 
-=head2 fulltext($attr,$query[,$options])
+=head2 fulltext( $attr, $query [,$options] )
 
 [API 1.2 or later]
 
@@ -1139,7 +1139,7 @@ sub ensure_unique_skiplist {
 
 =pod
 
-=head2 ensure_geo_index($fileds[,$is_geojson])
+=head2 ensure_geo_index( $fileds [,$is_geojson] )
 
 Create geo index for the collection. Returns instance of L<ArangoDB::Index::Geo>.
 
@@ -1185,7 +1185,7 @@ sub ensure_geo_index {
 
 =pod
 
-=head2 ensure_fulltext_index($filed[,$min_length])
+=head2 ensure_fulltext_index( $filed [,$min_length] )
 
 [API 1.2 or later]
 
@@ -1214,7 +1214,7 @@ sub ensure_fulltext_index;
 
 =pod
 
-=head2 ensure_geo_constraint($fileds[,$ignore_null])
+=head2 ensure_geo_constraint( $fileds [,$ignore_null] )
 
 It works like ensure_geo_index() but requires that the documents contain a valid geo definition.
 Returns instance of L<ArangoDB::Index::Geo>.

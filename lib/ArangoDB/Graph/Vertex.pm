@@ -44,7 +44,7 @@ Constructor.
 
 =head2 id()
 
-Returns identifer of the vertex.
+Returns identifier of the vertex.
 
 =head2 revision()
 

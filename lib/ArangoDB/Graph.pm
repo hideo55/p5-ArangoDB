@@ -201,7 +201,7 @@ Constructor.
 
 =head2 id()
 
-Returns identifer of the graph.
+Returns identifier of the graph.
 
 =head2 revision()
 

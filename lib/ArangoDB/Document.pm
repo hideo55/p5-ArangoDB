@@ -80,7 +80,7 @@ Constructor.
 
 =head2 id()
 
-Returns identifer of the document.
+Returns identifier of the document.
 
 =head2 revision()
 
@@ -102,7 +102,7 @@ Returns content of the document.
 
 Get the value of an attribute of the document
 
-=head2 set($attr_name,$value)
+=head2 set( $attr_name, $value )
 
 Update the value of an attribute (Does not write to database)
 

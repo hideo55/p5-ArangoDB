@@ -31,7 +31,7 @@ on 'test' => sub {
 };
 
 on 'develop' => sub {
-    requires 'Test::Spelling';
+    requires 'Test::Spellunker';
     requires 'Test::Perl::Critic';
     requires 'Test::Pod';
     requires 'Test::Pod::Coverage';

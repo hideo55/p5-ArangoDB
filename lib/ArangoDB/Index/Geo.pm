@@ -54,7 +54,7 @@ Returns identifier of the index.
 
 =head2 fields()
 
-List of attribure paths.
+List of attribute paths.
 
 =head2 geoJson()
 

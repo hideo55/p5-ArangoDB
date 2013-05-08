@@ -51,7 +51,7 @@ Constructor.
 
 =head2 id()
 
-Returns identifer of the edge.
+Returns identifier of the edge.
 
 =head2 revision()
 
@@ -69,7 +69,7 @@ Returns content of the edge.
 
 Get the value of an attribute of the edge.
 
-=head2 set($attr_name,$value)
+=head2 set( $attr_name, $value )
 
 Update the value of an attribute (Does not write to database)
 

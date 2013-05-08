@@ -171,7 +171,7 @@ $options is query options.The attributes of $options are:
 
 =item batch_size
 
-Maximum number of result documents to be transferred from the server to the client in one roundtrip (optional). 
+Maximum number of result documents to be transferred from the server to the client in one round trip (optional). 
 
 =item do_count
 

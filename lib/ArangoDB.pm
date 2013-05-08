@@ -320,7 +320,7 @@ Default: false
 
 =item journalSize
 
-The maximal size of a journal or datafile.
+The maximal size of a journal or data file.
 
 =item isSystem
 
@@ -332,7 +332,7 @@ Default: false
 
 [API 1.1 or later]
 
-Collection type. ArangoDB::DOCUMENT_COLLECTION or ArangoDB::EDGE_COLLECTION is avaiable.
+Collection type. ArangoDB::DOCUMENT_COLLECTION or ArangoDB::EDGE_COLLECTION is available.
 
 Default: ArangoDB::DOCUMENT_COLLECTION 
 
@@ -374,7 +374,7 @@ Get AQL statement handler. Returns instance of L<ArangoDB::Statement>.
 
 =head2 document($doc)
 
-Get documnet in the collection based on $doc. Returns instance of L<ArangoDB::Document>.
+Get document in the collection based on $doc. Returns instance of L<ArangoDB::Document>.
 
 =head2 edge($edge)
 
@@ -404,7 +404,7 @@ See:
 
 =head1 SEE ALSO
 
-ArangoDB websie L<http://www.arangodb.org/>
+ArangoDB WEB site L<http://www.arangodb.org/>
 
 =head1 DEVELOPMENT
 
